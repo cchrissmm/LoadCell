@@ -98,5 +98,5 @@ void loop() {
   }
 
   myGNSS.checkUblox(); //See if new data is available. Process bytes as they come in.
-  delay(20); //Don't pound too hard on the I2C bus
+  delay(50); //Don't pound too hard on the I2C bus
 }
