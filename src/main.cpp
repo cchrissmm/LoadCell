@@ -74,7 +74,25 @@ void setup() {
   }
 
   //This will pipe all NMEA sentences to the serial port so we can see them
-  myGNSS.setNMEAOutputPort(Serial);
+  //myGNSS.setNMEAOutputPort(Serial);
+
+    myGNSS.setI2COutput(COM_TYPE_UBX); //Set the I2C port to output UBX only (turn off NMEA noise)
+
+  myGNSS.setESFAutoAlignment(true); //Enable Automatic IMU-mount Alignment
+
+  if (myGNSS.getEsfInfo()){
+
+    Serial.print(F("Fusion Mode: "));  
+    Serial.println(myGNSS.packetUBXESFSTATUS->data.fusionMode);  
+
+    if (myGNSS.packetUBXESFSTATUS->data.fusionMode == 1){
+      Serial.println(F("Fusion Mode is Initialized!"));  
+		}
+		else {
+      Serial.println(F("Fusion Mode is either disabled or not initialized!"));  
+			Serial.println(F("Please see the previous example for more information."));
+		}
+  }
 }
 
 void loop() {
@@ -97,6 +115,8 @@ void loop() {
       calibration_factor -= 100;
   }
 
-  myGNSS.checkUblox(); //See if new data is available. Process bytes as they come in.
+  Serial.print(F("<h>Vehicle Attitude: Roll: ")); 
+  Serial.print("<p>"); // Use the helper function to get the roll in degrees
+  Serial.println(myGNSS.getATTroll(), 2); // Use the helper function to get the roll in degrees
   delay(50); //Don't pound too hard on the I2C bus
 }
