@@ -31,11 +31,19 @@
 
 */
 
+#include <Wire.h> //Needed for I2C to GPS
+
+#include "SparkFun_u-blox_GNSS_Arduino_Library.h" //Click here to get the library: http://librarymanager/All#SparkFun_u-blox_GNSS
+SFE_UBLOX_GNSS myGNSS;
+
 #include "HX711.h"
 #include <Arduino.h>
 
 #define DOUT  2
 #define CLK  4
+
+#define GPS_SDA 22
+#define GPS_SCL 23
 
 HX711 scale;
 
@@ -56,18 +64,29 @@ void setup() {
   long zero_factor = scale.read_average(); //Get a baseline reading
   Serial.print("Zero factor: "); //This can be used to remove the need to tare the scale. Useful in permanent scale projects.
   Serial.println(zero_factor);
+
+  Wire.begin(GPS_SDA,GPS_SCL);  //SDA, SCL
+
+  if (myGNSS.begin() == false)
+  {
+    Serial.println(F("u-blox GNSS module not detected at default I2C address. Please check wiring. Freezing."));
+    while (1);
+  }
+
+  //This will pipe all NMEA sentences to the serial port so we can see them
+  myGNSS.setNMEAOutputPort(Serial);
 }
 
 void loop() {
 
   scale.set_scale(calibration_factor); //Adjust to this calibration factor
 
-  Serial.print("Reading: ");
-  Serial.print(scale.get_units(), 3);
-  Serial.print(" kg"); //Change this to kg and re-adjust the calibration factor if you follow SI units like a sane person
-  Serial.print(" calibration_factor: ");
-  Serial.print(calibration_factor);
-  Serial.println();
+  // Serial.print("Reading: ");
+  // Serial.print(scale.get_units(), 3);
+  // Serial.print(" kg"); //Change this to kg and re-adjust the calibration factor if you follow SI units like a sane person
+  // Serial.print(" calibration_factor: ");
+  // Serial.print(calibration_factor);
+  // Serial.println();
 
   if(Serial.available())
   {
@@ -77,4 +96,7 @@ void loop() {
     else if(temp == '-' || temp == 'z')
       calibration_factor -= 100;
   }
+
+  myGNSS.checkUblox(); //See if new data is available. Process bytes as they come in.
+  delay(20); //Don't pound too hard on the I2C bus
 }
