@@ -155,11 +155,9 @@ def read_serial():
             if line.startswith("HEAD"):
                 header_line = line[4:].strip().split(",")
                 counter += 1
-                #print(f"counter: {counter}")
                 if counter >= 100:
                     elapsed_time = time.time() - f_start_time  # Calculate elapsed time
                     frequency = counter / elapsed_time  # Calculate frequency
-                    print(f"Data received at a frequency of {frequency} Hz")
                     freq_label.config(text=f"Logging running at {int(frequency)} Hz.")
                     counter = 0  # Reset the counter
                     f_start_time = time.time()  # Reset the timer
