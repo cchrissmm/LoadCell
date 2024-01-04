@@ -39,6 +39,11 @@ SFE_UBLOX_GNSS myGNSS;
 #include "HX711.h"
 #include <Arduino.h>
 
+#include <string.h>
+
+using std::string; //this eliminates the need to write std::string, you can just write string
+using std::to_string; //this eliminates the need to write std::to_string, you can just write to_string
+
 #define DOUT  2
 #define CLK  4
 
@@ -78,7 +83,7 @@ void setup() {
 
   myGNSS.setI2COutput(COM_TYPE_UBX); //Set the I2C port to output UBX only (turn off NMEA noise)
 
-  if(myGNSS.setNavigationFrequency(20)) {
+  if(myGNSS.setNavigationFrequency(30)) {
     Serial.println(F("Set Nav Frequency Successful"));
   } else {
     Serial.println(F("Set Nav Frequency Failed"));
@@ -121,12 +126,28 @@ void loop() {
       calibration_factor -= 100;
   }
 
-  Serial.print(F("Vehicle Attitude Roll:")); 
-  Serial.print(myGNSS.getATTroll(), 2); // Use the helper function to get the roll in degrees
-  Serial.println(";"); // Use the helper function to get the roll in degrees
+long time = millis();
+long GPS_lat = myGNSS.getLatitude();
+long GPS_long = myGNSS.getLongitude();
+long GPS_groundSpeed_mms = myGNSS.getGroundSpeed();
+float GPS_groundSpeed = GPS_groundSpeed_mms * 0.0001;
+long GPS_heading_105 = myGNSS.getHeading();
+float GPS_heading = GPS_heading_105 * 0.000001; //degrees
+long GPS_Seconds = myGNSS.getSecond();
 
-  Serial.print(F("Vehicle Attitude Pitch:")); 
-  Serial.print(myGNSS.getATTpitch(), 2); // Use the helper function to get the roll in degrees
-  Serial.println(";"); // Use the helper function to get the roll in degrees
-  delay(25); //Don't pound too hard on the I2C bus
+
+Serial.println("HEADtime,GPS_groundSpeed,GPS_lat,GPS_long,GPS_heading,GPS_Seconds");
+Serial.print("DATA");
+Serial.print(time);
+Serial.print(",");
+Serial.print(GPS_groundSpeed);
+Serial.print(",");
+Serial.print(GPS_lat);
+Serial.print(",");
+Serial.print(GPS_long);
+Serial.print(",");
+Serial.print(GPS_heading);
+Serial.print(",");
+Serial.println(GPS_Seconds);
+
 }
