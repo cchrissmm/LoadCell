@@ -189,6 +189,7 @@ def toggle_autoscroll():
 def open_uniview(file_path):
     uniview_executable = r'c:\wtools\UNIVW64.exe'  # Replace with the actual path to UNIVW32.EXE
     command = f'"{uniview_executable}" /s=640*480 "{file_path}"'
+    print(f"open uniview called with: {command}")
     subprocess.Popen(command, shell=True)
 
 # Create the label and dropdown menu to select the COM port
@@ -214,7 +215,7 @@ autoscroll_button.grid(row=8, column=0, padx=5, pady=5)
 Button(root, text="Open in CSV Viewer", command=lambda: launch_flow_csv_viewer(full_path), width=20).grid(row=3, column=1, padx=5, pady=5)
 
 # Create the launch Uniview button
-uniview_button = Button(root, text="Open Uniview", command=open_uniview(full_path))
+uniview_button = Button(root, text="Open Uniview", command=lambda: open_uniview(full_path))
 uniview_button.grid(row=3, column=3, padx=5, pady=5)
 
 # Create the save as button
