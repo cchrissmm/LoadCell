@@ -77,7 +77,7 @@ void setup() {
   //myGNSS.setNMEAOutputPort(Serial);
 
   myGNSS.setI2COutput(COM_TYPE_UBX); //Set the I2C port to output UBX only (turn off NMEA noise)
-  
+
   if(myGNSS.setNavigationFrequency(20)) {
     Serial.println(F("Set Nav Frequency Successful"));
   } else {
@@ -121,14 +121,12 @@ void loop() {
       calibration_factor -= 100;
   }
 
-  Serial.print(F("<h>Vehicle Attitude: Roll: <.h>")); 
-  Serial.print("<p>"); // Use the helper function to get the roll in degrees
+  Serial.print(F("Vehicle Attitude Roll:")); 
   Serial.print(myGNSS.getATTroll(), 2); // Use the helper function to get the roll in degrees
-  Serial.println("<.p>"); // Use the helper function to get the roll in degrees
+  Serial.println(";"); // Use the helper function to get the roll in degrees
 
-  Serial.print(F("<h>Vehicle Attitude: Pitch: <.h>")); 
-  Serial.print("<p>"); // Use the helper function to get the roll in degrees
+  Serial.print(F("Vehicle Attitude Pitch:")); 
   Serial.print(myGNSS.getATTpitch(), 2); // Use the helper function to get the roll in degrees
-  Serial.println("<.p>"); // Use the helper function to get the roll in degrees
+  Serial.println(";"); // Use the helper function to get the roll in degrees
   delay(25); //Don't pound too hard on the I2C bus
 }

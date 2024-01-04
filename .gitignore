@@ -4,3 +4,5 @@
 .vscode/launch.json
 .vscode/ipch
 *.csv
+*.d97
+temp_data.txt
