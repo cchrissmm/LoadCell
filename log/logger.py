@@ -3,6 +3,7 @@ from tkinter import ttk
 import serial
 import serial.tools.list_ports
 import threading
+import time 
 
 class SerialLogger:
     def __init__(self, root):
@@ -11,6 +12,7 @@ class SerialLogger:
         self.logging_active = False
         self.temp_file_name = "temp_data.txt"
         self.thread = None
+        self.start_time = 0  # Add a variable to store the start time of the logging session
 
         self.setup_gui()
 
@@ -33,7 +35,7 @@ class SerialLogger:
         self.stop_button = tk.Button(self.top_frame, text="Stop Logging", state=tk.DISABLED, command=self.stop_logging)
         self.stop_button.grid(row=0, column=3, padx=10)
 
-        self.text_data = tk.Text(self.root, height=15, width=50)
+        self.text_data = tk.Text(self.root, height=15, width=100)
         self.text_data.pack(pady=10)
 
     def connect_serial(self):
@@ -59,6 +61,8 @@ class SerialLogger:
         self.logging_active = True
         self.start_button.config(state=tk.DISABLED)
         self.stop_button.config(state=tk.NORMAL)
+        # Record the start time when logging is started
+        self.start_time = time.time() * 1000  # Convert seconds to milliseconds
 
     def stop_logging(self):
         self.logging_active = False
@@ -69,7 +73,9 @@ class SerialLogger:
         while self.serial_connected:
             try:
                 line = self.serial_port.readline().decode('utf-8')
-                self.root.after(0, lambda: self.text_data.insert(tk.END, line))
+                timestamp = int((time.time() * 1000) - self.start_time)  # Calculate elapsed time in ms
+                log_line = f"{timestamp} : {line}"  # Combine timestamp and data
+                self.root.after(0, lambda: self.text_data.insert(tk.END, log_line))
                 if self.logging_active:
                     with open(self.temp_file_name, "a") as temp_file:
                         temp_file.write(line)
