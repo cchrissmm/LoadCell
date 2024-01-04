@@ -150,14 +150,6 @@ def read_serial():
 
     root.after(10, read_serial)
 
-# Function to launch the CSV Viewer, it will use the default program to open CSV files
-def launch_flow_csv_viewer(csv_file_path):
-    csv_file_path = csv_file_path.replace('\\', '\\\\')
-    try:
-        os.startfile(csv_file_path)
-    except FileNotFoundError:
-        print("File not found. Please make sure the CSV file exists.")
-
 # function to save the log file to a different name or location
 def save_as():
     global full_path
@@ -176,6 +168,35 @@ def save_as():
                 status_label.config(text=f"Error saving file: {e}")
     else:
         status_label.config(text="No log file to save.")
+
+#new save as filename function
+def save_trace():
+    filename = traceFile_entry.get()
+    if not filename:
+        return
+
+    # Get a list of all files in the current directory
+    files = os.listdir()
+
+    # Find all files that start with the entered filename and end with a number
+    matching_files = [file for file in files if re.match(f"{filename}_\d+\.csv", file)]
+
+    # Find the highest number among these files
+    highest_number = max((int(file.split('_')[-1].split('.')[0]) for file in matching_files), default=0)
+
+    # Use the next available number for the new file
+    full_filename = f"{filename}_{highest_number + 1:04d}.csv"
+
+    try:
+        with open(full_path, "r") as original_file:
+            content = original_file.read()
+
+        with open(full_filename, "w") as save_as_file:
+            save_as_file.write(content)
+
+        status_label.config(text=f"Log file saved as: {full_filename}")
+    except Exception as e:
+        status_label.config(text=f"Error saving file: {e}")
 
 #autoscrol function
 def toggle_autoscroll():
@@ -211,15 +232,17 @@ log_button.grid(row=3, column=0, padx=5, pady=5)
 autoscroll_button = Button(root, text="Autoscroll: ON", command=toggle_autoscroll, width=20, bg="green")
 autoscroll_button.grid(row=8, column=0, padx=5, pady=5)
 
-#Create launch flow csv viewer button
-Button(root, text="Open in CSV Viewer", command=lambda: launch_flow_csv_viewer(full_path), width=20).grid(row=3, column=1, padx=5, pady=5)
-
 # Create the launch Uniview button
 uniview_button = Button(root, text="Open Uniview", command=lambda: open_uniview(full_path))
-uniview_button.grid(row=3, column=3, padx=5, pady=5)
+uniview_button.grid(row=3, column=1, padx=5, pady=5)
 
-# Create the save as button
-Button(root, text="Save As", command=save_as, width=20).grid(row=3, column=2, padx=5, pady=5)
+# Create the save trace button
+Button(root, text="Save Trace", command=save_trace, width=20).grid(row=3, column=2, padx=5, pady=5)
+
+# Create an entry to specify the save filename
+Label(root, text="Trace Filename:").grid(row=3, column=3, padx=5, pady=5)
+traceFile_entry = Entry(root, textvariable=ring_buffer_size, width=10)
+traceFile_entry.grid(row=3, column=4, padx=5, pady=5)
 
 # Create an entry to specify the ring buffer size
 Label(root, text="Ring buffer size:").grid(row=4, column=0, padx=5, pady=5)
@@ -238,6 +261,7 @@ log_text_box.grid(row=6, column=0, columnspan=5, padx=5, pady=5)
 # Create the label to display the connection status
 status_label = Label(root, text="Disconnected", width=100)
 status_label.grid(row=7, column=0, columnspan=4, padx=5, pady=5)
+
 # Start reading data from the serial port
 read_serial()
 
