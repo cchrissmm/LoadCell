@@ -12,13 +12,14 @@ import re
 root = Tk()
 
 # Set the size and title of the window
-root.geometry("1500x800")
+root.geometry("1200x700")
 root.title("Relativity Engineering Serial Logger")
 
 # Create the serial connection, text box, and ring buffer variables
 ser = None
 text_box = None
 ring_buffer_size = IntVar(value=1000)
+traceFileName = StringVar(value="trace")
 ring_buffer = deque(maxlen=ring_buffer_size.get())
 logging_enabled = False
 log_file = None
@@ -40,7 +41,6 @@ def toggle_logging():
             log_file_path = os.path.join(script_dir, "serial_log.csv")
             log_file = open(log_file_path, "w", newline="")  # Change 'a' to 'w' to overwrite the file
             full_path = os.path.abspath(log_file.name)
-            print(f"Log file opened successfully at {full_path}")  # Debugging print statement
             csv_writer = csv.writer(log_file)
             if header_line is not None:
                 csv_writer.writerow(header_line)
@@ -49,6 +49,7 @@ def toggle_logging():
                 serial_log_path = os.path.join(script_dir, "serial.log")
                 serial_log_file = open(serial_log_path, "w")  # Change 'a' to 'w' to overwrite the file
                 full_serial_log_path = os.path.abspath(serial_log_file.name)
+                status_label.config(text=f"Logging started: {full_path}")  # Update status label
                 print(f"Serial log file opened successfully at {full_serial_log_path}")  # Debugging print statement
         except Exception as e:
             print(f"Error opening log file: {e}")
@@ -99,6 +100,7 @@ def update_ring_buffer_size():
     global ring_buffer_size, ring_buffer
     new_size = ring_buffer_size.get()
     ring_buffer = deque(ring_buffer, maxlen=new_size)
+    status_label.config(text=f"ringbuffer set to: {new_size} cycles")  # Update status label
 
 # Function to connect to the selected COM port
 def connect():
@@ -150,25 +152,6 @@ def read_serial():
 
     root.after(10, read_serial)
 
-# function to save the log file to a different name or location
-def save_as():
-    global full_path
-    if full_path is not None:
-        save_as_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv"), ("All files", "*.*")])
-        if save_as_path:
-            try:
-                with open(full_path, "r") as original_file:
-                    content = original_file.read()
-                
-                with open(save_as_path, "w") as save_as_file:
-                    save_as_file.write(content)
-                
-                status_label.config(text=f"Log file saved as: {save_as_path}")
-            except Exception as e:
-                status_label.config(text=f"Error saving file: {e}")
-    else:
-        status_label.config(text="No log file to save.")
-
 #new save as filename function
 def save_trace():
     filename = traceFile_entry.get()
@@ -196,7 +179,7 @@ def save_trace():
 
         status_label.config(text=f"Log file saved as: {full_filename}")
     except Exception as e:
-        status_label.config(text=f"Error saving file: {e}")
+        status_label.config(text=f"Error saving file, probably no trace taken yet")
 
 #autoscrol function
 def toggle_autoscroll():
@@ -209,8 +192,9 @@ def toggle_autoscroll():
 
 def open_uniview(file_path):
     uniview_executable = r'c:\wtools\UNIVW64.exe'  # Replace with the actual path to UNIVW32.EXE
-    command = f'"{uniview_executable}" /s=640*480 "{file_path}"'
+    command = f'"{uniview_executable}" "{file_path}"'
     print(f"open uniview called with: {command}")
+    status_label.config(text=f"open uniview called with: {command}")
     subprocess.Popen(command, shell=True)
 
 # Create the label and dropdown menu to select the COM port
@@ -224,41 +208,45 @@ OptionMenu(root, port_menu, *[p.device for p in ports]).grid(row=0, column=1, pa
 Button(root, text="Connect", command=connect, width=20).grid(row=1, column=0, padx=5, pady=5)
 Button(root, text="Disconnect", command=disconnect, width=20).grid(row=1, column=1, padx=5, pady=5)
 
-# Create the start/stop logging button
-log_button = Button(root, text="Start Logging", command=toggle_logging, width=20, bg="green")
-log_button.grid(row=3, column=0, padx=5, pady=5)
-
 #create the autoscroll button
 autoscroll_button = Button(root, text="Autoscroll: ON", command=toggle_autoscroll, width=20, bg="green")
-autoscroll_button.grid(row=8, column=0, padx=5, pady=5)
+autoscroll_button.grid(row=1, column=2, padx=5, pady=5)
+
+# Create the start/stop logging button
+log_button = Button(root, text="Start Logging(space)", command=toggle_logging, width=20, bg="green")
+log_button.grid(row=3, column=0, padx=5, pady=5)
+# Bind the spacebar to the start stop logging function
+root.bind('<space>', lambda event: toggle_logging())
 
 # Create the launch Uniview button
-uniview_button = Button(root, text="Open Uniview", command=lambda: open_uniview(full_path))
+uniview_button = Button(root, text="Open Uniview(v)", command=lambda: open_uniview(full_path))
 uniview_button.grid(row=3, column=1, padx=5, pady=5)
+root.bind('v', lambda event: open_uniview(full_path))
 
 # Create the save trace button
-Button(root, text="Save Trace", command=save_trace, width=20).grid(row=3, column=2, padx=5, pady=5)
+Button(root, text="Save Trace(s)", command=save_trace, width=20).grid(row=3, column=2, padx=5, pady=5)
+root.bind('s', lambda event: save_trace())
 
 # Create an entry to specify the save filename
 Label(root, text="Trace Filename:").grid(row=3, column=3, padx=5, pady=5)
-traceFile_entry = Entry(root, textvariable=ring_buffer_size, width=10)
+traceFile_entry = Entry(root, textvariable=traceFileName, width=10)
 traceFile_entry.grid(row=3, column=4, padx=5, pady=5)
 
 # Create an entry to specify the ring buffer size
-Label(root, text="Ring buffer size:").grid(row=4, column=0, padx=5, pady=5)
+Label(root, text="Ring buffer size (#measurments):").grid(row=4, column=0, padx=5, pady=5)
 ring_buffer_entry = Entry(root, textvariable=ring_buffer_size, width=10)
 ring_buffer_entry.grid(row=4, column=1, padx=5, pady=5)
 Button(root, text="Update", command=update_ring_buffer_size, width=10).grid(row=4, column=2, padx=5, pady=5)
 
 # Create the text box to display the serial data stream
-text_box = ScrolledText(root, width=150, height=10)
+text_box = ScrolledText(root, width=120, height=10)
 text_box.grid(row=5, column=0, columnspan=5, padx=5, pady=5)
 
 # Create the text box to display the debug data
-log_text_box = ScrolledText(root, width=150, height=20)
+log_text_box = ScrolledText(root, width=120, height=20)
 log_text_box.grid(row=6, column=0, columnspan=5, padx=5, pady=5)
 
-# Create the label to display the connection status
+# Create the label to display the status
 status_label = Label(root, text="Disconnected", width=100)
 status_label.grid(row=7, column=0, columnspan=4, padx=5, pady=5)
 
