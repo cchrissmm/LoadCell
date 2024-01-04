@@ -8,6 +8,8 @@ import csv
 import os
 import subprocess
 import re
+import time
+import threading
 
 root = Tk()
 
@@ -29,13 +31,26 @@ full_path = None
 serial_log_file = None
 log_text_box = None
 autoscroll_enabled = True
+start_time = None
+
+
+# Function to update the status label every second
+def update_status_label():
+    global minutes, seconds
+    while logging_enabled:
+        elapsed_time = time.time() - start_time  # Calculate elapsed time
+        minutes, seconds = divmod(elapsed_time, 60)  # Convert elapsed time to minutes and seconds
+        status_label.config(text=f"Logging running for {int(minutes)} m {int(seconds)} s.")  # Update status label
+        time.sleep(1)  # Wait for 1 second
 
 # Function to toggle logging on or off
 def toggle_logging():
-    global logging_enabled, log_file, csv_writer, header_line, full_path, serial_log_file
+    global logging_enabled, log_file, csv_writer, header_line, full_path, serial_log_file, start_time
     logging_enabled = not logging_enabled
     if logging_enabled:
         log_button.config(text="Stop Logging", bg="red")
+        start_time = time.time()  # Start the timer
+        threading.Thread(target=update_status_label).start()  # Start the update_status_label thread
         try:
             script_dir = os.path.dirname(os.path.realpath(__file__))
             log_file_path = os.path.join(script_dir, "serial_log.csv")
@@ -49,7 +64,7 @@ def toggle_logging():
                 serial_log_path = os.path.join(script_dir, "serial.log")
                 serial_log_file = open(serial_log_path, "w")  # Change 'a' to 'w' to overwrite the file
                 full_serial_log_path = os.path.abspath(serial_log_file.name)
-                status_label.config(text=f"Logging started: {full_path}")  # Update status label
+                #status_label.config(text=f"Logging started: {full_path}")  # Update status label
                 print(f"Serial log file opened successfully at {full_serial_log_path}")  # Debugging print statement
         except Exception as e:
             print(f"Error opening log file: {e}")
@@ -63,13 +78,14 @@ def toggle_logging():
             csv_writer = None
             print("Log file closed successfully.")  # Debugging print statement
             if full_path is not None:  # Check if full_path is not None before updating the status label
-                status_label.config(text=f"Logging stopped: {full_path}")  # Update status label
+                #status_label.config(text=f"Logging stopped: {full_path}")  # Update status label
+                status_label.config(text=f"Trace {full_path} saved after {int(minutes)} m {int(seconds)} s.")  # Update status label
                 check_csv_file(full_path)
         
         if serial_log_file is not None:
             serial_log_file.close()
             serial_log_file = None
-            print("Serial log file closed successfully.")  # Debugging print statement
+            print("Trace file closed successfully.")  # Debugging print statement
 
 
 def check_csv_file(file_path):
@@ -236,7 +252,7 @@ traceFile_entry.grid(row=3, column=4, padx=5, pady=5)
 Label(root, text="Ring buffer size (#measurments):").grid(row=4, column=0, padx=5, pady=5)
 ring_buffer_entry = Entry(root, textvariable=ring_buffer_size, width=10)
 ring_buffer_entry.grid(row=4, column=1, padx=5, pady=5)
-Button(root, text="Update", command=update_ring_buffer_size, width=10).grid(row=4, column=2, padx=5, pady=5)
+Button(root, text="Update Ring Buffer Size", command=update_ring_buffer_size, width=25).grid(row=4, column=2, padx=5, pady=5)
 
 # Create the text box to display the serial data stream
 text_box = ScrolledText(root, width=120, height=10)
