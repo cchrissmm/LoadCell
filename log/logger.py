@@ -67,15 +67,15 @@ class SerialLogger:
 
     def read_serial(self):
         while self.serial_connected:
-            if self.logging_active:
-                try:
-                    line = self.serial_port.readline().decode('utf-8')
+            try:
+                line = self.serial_port.readline().decode('utf-8')
+                self.root.after(0, lambda: self.text_data.insert(tk.END, line))
+                if self.logging_active:
                     with open(self.temp_file_name, "a") as temp_file:
                         temp_file.write(line)
-                    self.root.after(0, lambda: self.text_data.insert(tk.END, line))
-                except serial.SerialException as e:
-                    self.root.after(0, lambda: self.text_data.insert(tk.END, f"Error: {str(e)}\n"))
-                    break
+            except serial.SerialException as e:
+                self.root.after(0, lambda: self.text_data.insert(tk.END, f"Error: {str(e)}\n"))
+                break
 
     def clear_temp_file(self):
         open(self.temp_file_name, 'w').close()
