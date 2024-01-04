@@ -32,6 +32,9 @@ serial_log_file = None
 log_text_box = None
 autoscroll_enabled = True
 start_time = None
+counter = 0
+f_start_time = time.time()
+
 
 
 # Function to update the status label every second
@@ -138,7 +141,7 @@ def disconnect():
 
 # Function to read data from the serial port and display it in the text box
 def read_serial():
-    global ser, text_box, ring_buffer, logging_enabled, log_file, csv_writer, header_line, serial_log_file, log_text_box
+    global ser, text_box, ring_buffer, logging_enabled, log_file, csv_writer, header_line, serial_log_file, log_text_box, counter, f_start_time
 
     if ser is not None and ser.isOpen():
         try:
@@ -151,6 +154,15 @@ def read_serial():
 
             if line.startswith("HEAD"):
                 header_line = line[4:].strip().split(",")
+                counter += 1
+                #print(f"counter: {counter}")
+                if counter >= 100:
+                    elapsed_time = time.time() - f_start_time  # Calculate elapsed time
+                    frequency = counter / elapsed_time  # Calculate frequency
+                    print(f"Data received at a frequency of {frequency} Hz")
+                    freq_label.config(text=f"Logging running at {int(frequency)} Hz.")
+                    counter = 0  # Reset the counter
+                    f_start_time = time.time()  # Reset the timer
 
             if logging_enabled and log_file is not None and csv_writer is not None:
                 if line.startswith("DATA"):
@@ -259,12 +271,16 @@ text_box = ScrolledText(root, width=120, height=10)
 text_box.grid(row=5, column=0, columnspan=5, padx=5, pady=5)
 
 # Create the text box to display the debug data
-log_text_box = ScrolledText(root, width=120, height=20)
+log_text_box = ScrolledText(root, width=120, height=10)
 log_text_box.grid(row=6, column=0, columnspan=5, padx=5, pady=5)
 
 # Create the label to display the status
-status_label = Label(root, text="Disconnected", width=100)
+status_label = Label(root, text="Disconnected", width=100, anchor='w')
 status_label.grid(row=7, column=0, columnspan=4, padx=5, pady=5)
+
+# Create the label to display the frequency
+freq_label = Label(root, text="Disconnected", width=100, anchor='w')
+freq_label.grid(row=8, column=0, columnspan=4, padx=5, pady=5)
 
 # Start reading data from the serial port
 read_serial()
