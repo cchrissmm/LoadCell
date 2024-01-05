@@ -223,12 +223,24 @@ def open_uniview(file_path):
     status_label.config(text=f"open uniview called with: {command}")
     subprocess.Popen(command, shell=True)
 
+def update_ports(menu):
+    ports = serial.tools.list_ports.comports()
+    menu.delete(0, 'end')
+    for port in ports:
+        menu.add_command(label=port.device, command=lambda p=port.device: port_menu.set(p))
+
 # Create the label and dropdown menu to select the COM port
 Label(root, text="Select COM port:").grid(row=0, column=0, padx=5, pady=5)
-ports = serial.tools.list_ports.comports()
+
 port_menu = StringVar(root)
-port_menu.set(ports[0].device)
-OptionMenu(root, port_menu, *[p.device for p in ports]).grid(row=0, column=1, padx=5, pady=5)
+dropdown = Menubutton(root, textvariable=port_menu, relief=RAISED)
+dropdown.grid(row=0, column=1, padx=5, pady=5)
+
+menu = Menu(dropdown, tearoff=False)
+dropdown.configure(menu=menu)
+
+# Update the ports when the dropdown is opened
+dropdown.bind('<Button-1>', lambda event: update_ports(menu))
 
 # Create the connect and disconnect buttons
 Button(root, text="Connect", command=connect, width=20).grid(row=1, column=0, padx=5, pady=5)

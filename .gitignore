@@ -6,3 +6,4 @@
 *.csv
 *.d97
 temp_data.txt
+.vscode/extensions.json
