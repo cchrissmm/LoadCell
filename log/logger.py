@@ -162,9 +162,13 @@ def read_serial():
                     counter = 0  # Reset the counter
                     f_start_time = time.time()  # Reset the timer
 
-            if logging_enabled and log_file is not None and csv_writer is not None:
-                if line.startswith("DATA"):
-                    data_line = line[4:].strip().split(",")
+            if line.startswith("DATA"):
+                data_line = line[4:].strip().split(",")
+                # Update the live data box with the value from the third column
+                live_data_box.delete(1.0, END)
+                live_data_box.insert(END, data_line[2])  # Index 2 corresponds to the third column
+
+                if logging_enabled and log_file is not None and csv_writer is not None:
                     csv_writer.writerow(data_line)
                 
             if not line.startswith("HEAD") and not line.startswith("DATA"):
@@ -297,6 +301,11 @@ status_label.grid(row=7, column=0, columnspan=6, padx=5, pady=5, sticky='W')
 # Create the label to display the frequency
 freq_label = Label(root, text="Disconnected", width=100, anchor='w', font=("default", 16))
 freq_label.grid(row=8, column=0, columnspan=6, padx=5, pady=5, sticky='W')
+
+# LiveDataBox
+live_data_box = Text(root, width=120, height=5)
+live_data_box.grid(row=10, column=0, columnspan=5, padx=5, pady=5, sticky='W')
+
 
 # Start reading data from the serial port
 read_serial()
