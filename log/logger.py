@@ -166,7 +166,7 @@ def read_serial():
                 data_line = line[4:].strip().split(",")
                 # Update the live data box with the value from the third column
                 live_data_box.delete(1.0, END)
-                live_data_box.insert(END, data_line[2])  # Index 2 corresponds to the third column
+                live_data_box.insert(END, data_line[1])  # Index 2 corresponds to the third column
 
                 if logging_enabled and log_file is not None and csv_writer is not None:
                     csv_writer.writerow(data_line)
@@ -303,8 +303,10 @@ freq_label = Label(root, text="Disconnected", width=100, anchor='w', font=("defa
 freq_label.grid(row=8, column=0, columnspan=6, padx=5, pady=5, sticky='W')
 
 # LiveDataBox
-live_data_box = Text(root, width=120, height=5)
-live_data_box.grid(row=10, column=0, columnspan=5, padx=5, pady=5, sticky='W')
+live_data_label = Label(root, text="Speed (m/s):", font=("default", 16))
+live_data_label.grid(row=10, column=0, sticky='W')
+live_data_box = Text(root, width=10, height=1,font=("default", 50))
+live_data_box.grid(row=11, column=0, columnspan=2, padx=5, pady=5, sticky='W')
 
 
 # Start reading data from the serial port
