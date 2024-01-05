@@ -34,7 +34,7 @@ autoscroll_enabled = True
 start_time = None
 counter = 0
 f_start_time = time.time()
-
+connection_enabled = False
 
 
 # Function to update the status label every second
@@ -51,7 +51,7 @@ def toggle_logging():
     global logging_enabled, log_file, csv_writer, header_line, full_path, serial_log_file, start_time
     logging_enabled = not logging_enabled
     if logging_enabled:
-        log_button.config(text="Stop Logging")
+        log_button.config(text="Stop Logging(space)")
         start_time = time.time()  # Start the timer
         threading.Thread(target=update_status_label).start()  # Start the update_status_label thread
         try:
@@ -74,7 +74,7 @@ def toggle_logging():
             logging_enabled = not logging_enabled
             log_button.config(text="Start Logging")
     else:
-        log_button.config(text="Start Logging")
+        log_button.config(text="Start Logging(space)")
         if log_file is not None and header_line is not None:
             log_file.close()
             log_file = None
@@ -82,7 +82,7 @@ def toggle_logging():
             print("Log file closed successfully.")  # Debugging print statement
             if full_path is not None:  # Check if full_path is not None before updating the status label
                 #status_label.config(text=f"Logging stopped: {full_path}")  # Update status label
-                status_label.config(text=f"Trace {full_path} saved after {int(minutes)} m {int(seconds)} s.")  # Update status label
+                status_label.config(text=f"Trace {full_path} stopped after {int(minutes)} m {int(seconds)} s.")  # Update status label
                 check_csv_file(full_path)
         
         if serial_log_file is not None:
@@ -203,9 +203,9 @@ def save_trace():
         with open(full_filename, "w") as save_as_file:
             save_as_file.write(content)
 
-        status_label.config(text=f"Log file saved as: {full_filename}")
+        status_label.config(text=f"Trace saved as: {full_filename}")
     except Exception as e:
-        status_label.config(text=f"Error saving file, probably no trace taken yet")
+        status_label.config(text=f"Error saving trace, probably no trace taken yet")
 
 #autoscrol function
 def toggle_autoscroll():
@@ -229,46 +229,52 @@ def update_ports(menu):
     for port in ports:
         menu.add_command(label=port.device, command=lambda p=port.device: port_menu.set(p))
 
-# Create the label and dropdown menu to select the COM port
-Label(root, text="Select COM port:").grid(row=0, column=0, padx=5, pady=5)
+def toggle_connection():
+    global connection_enabled
+    if connection_enabled:
+        disconnect()
+        connect_button.config(text='Connect', command=toggle_connection)
+    else:
+        connect()
+        connect_button.config(text='Disconnect', command=toggle_connection)
+    connection_enabled = not connection_enabled
 
+# Create the label and dropdown menu to select the COM port
 port_menu = StringVar(root, value="Select COM port")
 dropdown = Menubutton(root, textvariable=port_menu, relief=RAISED)
-dropdown.grid(row=0, column=1, padx=5, pady=5)
-
+dropdown.grid(row=0, column=0, padx=5, pady=5)
 menu = Menu(dropdown, tearoff=False)
 dropdown.configure(menu=menu)
-
 # Update the ports when the dropdown is opened
 dropdown.bind('<Button-1>', lambda event: update_ports(menu))
 
 # Create the connect and disconnect buttons
-Button(root, text="Connect", command=connect, width=20).grid(row=1, column=0, padx=5, pady=5)
-Button(root, text="Disconnect", command=disconnect, width=20).grid(row=1, column=1, padx=5, pady=5)
+# Create the toggle button
+connect_button = Button(root, text="Connect", command=toggle_connection, width=20)
+connect_button.grid(row=0, column=1, padx=5, pady=5)
 
 #create the autoscroll button
 autoscroll_button = Button(root, text="Autoscroll: ON", command=toggle_autoscroll, width=20)
-autoscroll_button.grid(row=1, column=2, padx=5, pady=5)
+autoscroll_button.grid(row=0, column=2, padx=5, pady=5)
 
 # Create the start/stop logging button
-log_button = Button(root, text="Start Logging(space)", command=toggle_logging, width=20)
-log_button.grid(row=3, column=0, padx=5, pady=5)
+log_button = Button(root, text="Start Logging(space)", command=toggle_logging, width=20,font=("default", 16))
+log_button.grid(row=9, column=0, padx=5, pady=5)
 # Bind the spacebar to the start stop logging function
 root.bind('<space>', lambda event: toggle_logging())
 
 # Create the launch Uniview button
-uniview_button = Button(root, text="Open Uniview(v)", command=lambda: open_uniview(full_path))
-uniview_button.grid(row=3, column=1, padx=5, pady=5)
-root.bind('v', lambda event: open_uniview(full_path))
+uniview_button = Button(root, text="Open Uniview(u)", font=("default", 16), command=lambda: open_uniview(full_path))
+uniview_button.grid(row=9, column=1, padx=5, pady=5)
+root.bind('u', lambda event: open_uniview(full_path))
 
 # Create the save trace button
-Button(root, text="Save Trace(s)", command=save_trace, width=20).grid(row=3, column=2, padx=5, pady=5)
+Button(root, text="Save Trace(s)", command=save_trace, width=20,font=("default", 16)).grid(row=9, column=2, padx=5, pady=5)
 root.bind('s', lambda event: save_trace())
 
 # Create an entry to specify the save filename
-Label(root, text="Trace Filename:").grid(row=3, column=3, padx=5, pady=5)
-traceFile_entry = Entry(root, textvariable=traceFileName, width=10)
-traceFile_entry.grid(row=3, column=4, padx=5, pady=5)
+traceFile_entry = Entry(root, textvariable=traceFileName, width=20,font=("default", 16))
+traceFile_entry.grid(row=9, column=3, padx=5, pady=5)
 
 # Create an entry to specify the ring buffer size
 Label(root, text="Ring buffer size (#measurments):").grid(row=4, column=0, padx=5, pady=5)
@@ -277,20 +283,20 @@ ring_buffer_entry.grid(row=4, column=1, padx=5, pady=5)
 Button(root, text="Update Ring Buffer Size", command=update_ring_buffer_size, width=25).grid(row=4, column=2, padx=5, pady=5)
 
 # Create the text box to display the serial data stream
-text_box = ScrolledText(root, width=120, height=10)
-text_box.grid(row=5, column=0, columnspan=5, padx=5, pady=5)
+text_box = ScrolledText(root, width=120, height=5)
+text_box.grid(row=5, column=0, columnspan=5, padx=5, pady=5, sticky='W')
 
 # Create the text box to display the debug data
-log_text_box = ScrolledText(root, width=120, height=10)
-log_text_box.grid(row=6, column=0, columnspan=5, padx=5, pady=5)
+log_text_box = ScrolledText(root, width=120, height=5)
+log_text_box.grid(row=6, column=0, columnspan=5, padx=5, pady=5, sticky='W')
 
 # Create the label to display the status
-status_label = Label(root, text="Disconnected", width=100, anchor='w')
-status_label.grid(row=7, column=0, columnspan=4, padx=5, pady=5)
+status_label = Label(root, text="Disconnected", width=100, anchor='w', font=("default", 16))
+status_label.grid(row=7, column=0, columnspan=6, padx=5, pady=5, sticky='W')
 
 # Create the label to display the frequency
-freq_label = Label(root, text="Disconnected", width=100, anchor='w')
-freq_label.grid(row=8, column=0, columnspan=4, padx=5, pady=5)
+freq_label = Label(root, text="Disconnected", width=100, anchor='w', font=("default", 16))
+freq_label.grid(row=8, column=0, columnspan=6, padx=5, pady=5, sticky='W')
 
 # Start reading data from the serial port
 read_serial()
