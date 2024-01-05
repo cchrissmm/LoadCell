@@ -51,7 +51,7 @@ def toggle_logging():
     global logging_enabled, log_file, csv_writer, header_line, full_path, serial_log_file, start_time
     logging_enabled = not logging_enabled
     if logging_enabled:
-        log_button.config(text="Stop Logging", bg="red")
+        log_button.config(text="Stop Logging")
         start_time = time.time()  # Start the timer
         threading.Thread(target=update_status_label).start()  # Start the update_status_label thread
         try:
@@ -72,9 +72,9 @@ def toggle_logging():
         except Exception as e:
             print(f"Error opening log file: {e}")
             logging_enabled = not logging_enabled
-            log_button.config(text="Start Logging", bg="green")
+            log_button.config(text="Start Logging")
     else:
-        log_button.config(text="Start Logging", bg="green")
+        log_button.config(text="Start Logging")
         if log_file is not None and header_line is not None:
             log_file.close()
             log_file = None
@@ -158,7 +158,7 @@ def read_serial():
                 if counter >= 100:
                     elapsed_time = time.time() - f_start_time  # Calculate elapsed time
                     frequency = counter / elapsed_time  # Calculate frequency
-                    freq_label.config(text=f"Logging running at {int(frequency)} Hz.")
+                    freq_label.config(text=f"Incoming data streaming at {int(frequency)} Hz.")
                     counter = 0  # Reset the counter
                     f_start_time = time.time()  # Reset the timer
 
@@ -212,9 +212,9 @@ def toggle_autoscroll():
     global autoscroll_enabled
     autoscroll_enabled = not autoscroll_enabled
     if autoscroll_enabled:
-        autoscroll_button.config(text="Autoscroll: ON", bg="green")
+        autoscroll_button.config(text="Autoscroll: ON")
     else:
-        autoscroll_button.config(text="Autoscroll: OFF", bg="red")
+        autoscroll_button.config(text="Autoscroll: OFF")
 
 def open_uniview(file_path):
     uniview_executable = r'c:\wtools\UNIVW64.exe'  # Replace with the actual path to UNIVW32.EXE
@@ -232,7 +232,7 @@ def update_ports(menu):
 # Create the label and dropdown menu to select the COM port
 Label(root, text="Select COM port:").grid(row=0, column=0, padx=5, pady=5)
 
-port_menu = StringVar(root)
+port_menu = StringVar(root, value="Select COM port")
 dropdown = Menubutton(root, textvariable=port_menu, relief=RAISED)
 dropdown.grid(row=0, column=1, padx=5, pady=5)
 
@@ -247,11 +247,11 @@ Button(root, text="Connect", command=connect, width=20).grid(row=1, column=0, pa
 Button(root, text="Disconnect", command=disconnect, width=20).grid(row=1, column=1, padx=5, pady=5)
 
 #create the autoscroll button
-autoscroll_button = Button(root, text="Autoscroll: ON", command=toggle_autoscroll, width=20, bg="green")
+autoscroll_button = Button(root, text="Autoscroll: ON", command=toggle_autoscroll, width=20)
 autoscroll_button.grid(row=1, column=2, padx=5, pady=5)
 
 # Create the start/stop logging button
-log_button = Button(root, text="Start Logging(space)", command=toggle_logging, width=20, bg="green")
+log_button = Button(root, text="Start Logging(space)", command=toggle_logging, width=20)
 log_button.grid(row=3, column=0, padx=5, pady=5)
 # Bind the spacebar to the start stop logging function
 root.bind('<space>', lambda event: toggle_logging())
