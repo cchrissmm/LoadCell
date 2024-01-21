@@ -32,6 +32,7 @@
 */
 
 #include <Wire.h> //Needed for I2C to GPS
+#include <EEPROM.h>
 
 #include "SparkFun_u-blox_GNSS_Arduino_Library.h" //Click here to get the library: http://librarymanager/All#SparkFun_u-blox_GNSS
 SFE_UBLOX_GNSS myGNSS;
@@ -40,114 +41,162 @@ SFE_UBLOX_GNSS myGNSS;
 #include <Arduino.h>
 
 #include <string.h>
+using std::string;    // this eliminates the need to write std::string, you can just write string
+using std::to_string; // this eliminates the need to write std::to_string, you can just write to_string
 
-using std::string; //this eliminates the need to write std::string, you can just write string
-using std::to_string; //this eliminates the need to write std::to_string, you can just write to_string
-
-#define DOUT  2
-#define CLK  4
+#define DOUT 2
+#define CLK 4
 
 #define GPS_SDA 22
 #define GPS_SCL 23
 
 HX711 scale;
 
-float calibration_factor = -34200; //-7050 worked for my 440lb max scale setup
+float calibration_factor = -34200; // set this default
+float tareValue = 0;
+string message = "";
+int systemErrorState = 0; // 0 = no error, 1 = error
 
-void setup() {
+void setup()
+{
   Serial.begin(115200);
-  Serial.println("HX711 calibration sketch");
-  Serial.println("Remove all weight from scale");
-  Serial.println("After readings begin, place known weight on scale");
-  Serial.println("Press + or a to increase calibration factor");
-  Serial.println("Press - or z to decrease calibration factor");
+  Serial.println("Relativity DAQ v1.0.0");
+  Serial.println("Setup started............................................");
 
   scale.begin(DOUT, CLK);
-  scale.set_scale();
-  scale.tare(); //Reset the scale to 0
 
-  long zero_factor = scale.read_average(); //Get a baseline reading
-  Serial.print("Zero factor: "); //This can be used to remove the need to tare the scale. Useful in permanent scale projects.
+  EEPROM.begin(512); // Initialize EEPROM with a size of 512 bytes
+
+  if (EEPROM.get(0, calibration_factor))
+  {
+    Serial.print("LC Calibration factor loaded from EEPROM: ");
+    Serial.println(calibration_factor);
+  }
+  else
+  {
+    Serial.print("ERROR: LC Calibration factor not found in EEPROM, using default: ");
+    systemErrorState = 1;
+    Serial.println(calibration_factor);
+  }
+
+  scale.set_scale(calibration_factor);
+
+  long zero_factor = scale.read_average(); // Get a baseline reading
+  Serial.print("Zero factor: ");           // This can be used to remove the need to tare the scale. Useful in permanent scale projects.
   Serial.println(zero_factor);
 
-  Wire.begin(GPS_SDA,GPS_SCL);  //SDA, SCL
+  Wire.begin(GPS_SDA, GPS_SCL); // SDA, SCL
 
   if (myGNSS.begin() == false)
   {
     Serial.println(F("u-blox GNSS module not detected at default I2C address. Please check wiring. Freezing."));
-    while (1);
+    while (1)
+      ;
   }
 
-  //This will pipe all NMEA sentences to the serial port so we can see them
-  //myGNSS.setNMEAOutputPort(Serial);
+  myGNSS.setI2COutput(COM_TYPE_UBX); // Set the I2C port to output UBX only (turn off NMEA noise)
 
-  myGNSS.setI2COutput(COM_TYPE_UBX); //Set the I2C port to output UBX only (turn off NMEA noise)
-
-  if(myGNSS.setNavigationFrequency(30)) {
+  if (myGNSS.setNavigationFrequency(30))
+  {
     Serial.println(F("Set Nav Frequency Successful"));
-  } else {
+  }
+  else
+  {
     Serial.println(F("Set Nav Frequency Failed"));
+    systemErrorState = 1;
   }
 
-  myGNSS.setESFAutoAlignment(true); //Enable Automatic IMU-mount Alignment
+  myGNSS.setESFAutoAlignment(true); // Enable Automatic IMU-mount Alignment
 
-  if (myGNSS.getEsfInfo()){
+  if (myGNSS.getEsfInfo())
+  {
 
-    Serial.print(F("Fusion Mode: "));  
-    Serial.println(myGNSS.packetUBXESFSTATUS->data.fusionMode);  
+    Serial.print(F("Fusion Mode: "));
+    Serial.println(myGNSS.packetUBXESFSTATUS->data.fusionMode);
 
-    if (myGNSS.packetUBXESFSTATUS->data.fusionMode == 1){
-      Serial.println(F("Fusion Mode is Initialized!"));  
-		}
-		else {
-      Serial.println(F("Fusion Mode is either disabled or not initialized!"));  
-			Serial.println(F("Please see the previous example for more information."));
-		}
+    if (myGNSS.packetUBXESFSTATUS->data.fusionMode == 1)
+    {
+      Serial.println(F("Fusion Mode is Initialized!"));
+    }
+    else
+    {
+      Serial.println(F("Fusion Mode is either disabled or not initialized!"));
+      Serial.println(F("Please see the previous example for more information."));
+      systemErrorState = 1;
+    }
   }
+
+  Serial.println("Setup complete............................................");
 }
 
-void loop() {
-
-  scale.set_scale(calibration_factor); //Adjust to this calibration factor
-
-  // Serial.print("Reading: ");
-  // Serial.print(scale.get_units(), 3);
-  // Serial.print(" kg"); //Change this to kg and re-adjust the calibration factor if you follow SI units like a sane person
-  // Serial.print(" calibration_factor: ");
-  // Serial.print(calibration_factor);
-  // Serial.println();
-
-  if(Serial.available())
+void loop()
+{
+  while (Serial.available())
   {
-    char temp = Serial.read();
-    if(temp == '+' || temp == 'a')
-      calibration_factor += 100;
-    else if(temp == '-' || temp == 'z')
-      calibration_factor -= 100;
+    char msgBit = Serial.read();
+    if (msgBit == '<') // Start of delimiter received
+    {
+      message = ""; // Reset message buffer
+    }
+    else if (msgBit == '>') // End of delimiter received
+    {
+      if (message == "<LCZero>")
+      {
+        // scale.tare(); // Reset the scale to 0
+        tareValue = scale.get_tare();
+        scale.set_offset(tareValue);
+        Serial.print("Scale zeroed: ");
+        Serial.println(tareValue);
+        vTaskDelay(5000 / portTICK_PERIOD_MS);
+      }
+      if (message == "<LC10kg>") // 10kg calibration
+      {
+        float currentValue = scale.get_units(10);
+        float calibrationValue = currentValue / 980; // 10Kg = 980 Newtons
+        scale.set_scale(calibrationValue);
+        EEPROM.put(0, calibrationValue);
+        EEPROM.commit();
+        Serial.print("Calibration done at 10kg: ");
+        Serial.println(calibrationValue);
+        vTaskDelay(5000 / portTICK_PERIOD_MS);
+      }
+      message = ""; // Reset message buffer
+    }
+    else // Message character received
+    {
+      message += msgBit;
+    }
   }
 
-long time = millis();
-long GPS_lat = myGNSS.getLatitude();
-long GPS_long = myGNSS.getLongitude();
-long GPS_groundSpeed_mms = myGNSS.getGroundSpeed();
-float GPS_groundSpeed = GPS_groundSpeed_mms * 0.0001;
-long GPS_heading_105 = myGNSS.getHeading();
-float GPS_heading = GPS_heading_105 * 0.000001; //degrees
-long GPS_Seconds = myGNSS.getSecond();
+  long time = millis();
+  long GPS_lat = myGNSS.getLatitude();
+  long GPS_long = myGNSS.getLongitude();
+  long GPS_groundSpeed_mms = myGNSS.getGroundSpeed();
+  float GPS_groundSpeed = GPS_groundSpeed_mms * 0.0001;
+  long GPS_heading_105 = myGNSS.getHeading();
+  float GPS_heading = GPS_heading_105 * 0.000001; // degrees
+  long GPS_Seconds = myGNSS.getSecond();
 
-
-Serial.println("HEADtime,GPS_groundSpeed,GPS_lat,GPS_long,GPS_heading,GPS_Seconds");
-Serial.print("DATA");
-Serial.print(time);
-Serial.print(",");
-Serial.print(GPS_groundSpeed);
-Serial.print(",");
-Serial.print(GPS_lat);
-Serial.print(",");
-Serial.print(GPS_long);
-Serial.print(",");
-Serial.print(GPS_heading);
-Serial.print(",");
-Serial.println(GPS_Seconds);
-
+  if (systemErrorState == 1)
+  {
+    Serial.println("ERROR");
+  }
+  else
+  {
+    Serial.println("HEADtime,GPS_groundSpeed,GPS_lat,GPS_long,GPS_heading,GPS_Seconds,LC_Force");
+    Serial.print("DATA");
+    Serial.print(time);
+    Serial.print(",");
+    Serial.print(GPS_groundSpeed);
+    Serial.print(",");
+    Serial.print(GPS_lat);
+    Serial.print(",");
+    Serial.print(GPS_long);
+    Serial.print(",");
+    Serial.print(GPS_heading);
+    Serial.print(",");
+    Serial.println(GPS_Seconds);
+    Serial.print(",");
+    Serial.println(scale.get_units(), 3);
+  }
 }
