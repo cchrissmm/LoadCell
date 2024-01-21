@@ -79,19 +79,26 @@ void setup()
     Serial.println(calibration_factor);
   }
 
+  if (EEPROM.get(4, tareValue))
+  {
+    Serial.print("LC Tare value loaded from EEPROM: ");
+    Serial.println(tareValue);
+  }
+  else
+  {
+    Serial.print("ERROR: LC Tare value not found in EEPROM, using default: ");
+    systemErrorState = 1;
+    Serial.println(tareValue);
+  }
+  scale.set_offset(tareValue);
   scale.set_scale(calibration_factor);
-
-  long zero_factor = scale.read_average(); // Get a baseline reading
-  Serial.print("Zero factor: ");           // This can be used to remove the need to tare the scale. Useful in permanent scale projects.
-  Serial.println(zero_factor);
 
   Wire.begin(GPS_SDA, GPS_SCL); // SDA, SCL
 
   if (myGNSS.begin() == false)
   {
-    Serial.println(F("u-blox GNSS module not detected at default I2C address. Please check wiring. Freezing."));
-    while (1)
-      ;
+    Serial.println(F("ERROR u-blox GNSS module not detected at I2C address. Please check wiring."));
+    systemErrorState = 1;
   }
 
   myGNSS.setI2COutput(COM_TYPE_UBX); // Set the I2C port to output UBX only (turn off NMEA noise)
@@ -102,7 +109,7 @@ void setup()
   }
   else
   {
-    Serial.println(F("Set Nav Frequency Failed"));
+    Serial.println(F("ERROR Set Nav Frequency Failed"));
     systemErrorState = 1;
   }
 
@@ -120,8 +127,7 @@ void setup()
     }
     else
     {
-      Serial.println(F("Fusion Mode is either disabled or not initialized!"));
-      Serial.println(F("Please see the previous example for more information."));
+      Serial.println(F("ERROR Fusion Mode is either disabled or not initialized!"));
       systemErrorState = 1;
     }
   }
@@ -142,9 +148,11 @@ void loop()
     {
       if (message == "<LCZero>")
       {
-        // scale.tare(); // Reset the scale to 0
-        tareValue = scale.get_tare();
+        scale.tare(); // Reset the scale to 0
+        tareValue = scale.get_tare(); //get the value
         scale.set_offset(tareValue);
+        EEPROM.put(4, tareValue);
+        EEPROM.commit();
         Serial.print("Scale zeroed: ");
         Serial.println(tareValue);
         vTaskDelay(5000 / portTICK_PERIOD_MS);
@@ -176,10 +184,13 @@ void loop()
   long GPS_heading_105 = myGNSS.getHeading();
   float GPS_heading = GPS_heading_105 * 0.000001; // degrees
   long GPS_Seconds = myGNSS.getSecond();
+  float LC_Force = (scale.get_units(),3);
 
   if (systemErrorState == 1)
   {
-    Serial.println("ERROR");
+    Serial.println("ERROR system error");
+    vTaskDelay(10000 / portTICK_PERIOD_MS);
+    return;
   }
   else
   {
@@ -197,6 +208,6 @@ void loop()
     Serial.print(",");
     Serial.println(GPS_Seconds);
     Serial.print(",");
-    Serial.println(scale.get_units(), 3);
+    Serial.println(LC_Force);
   }
 }
