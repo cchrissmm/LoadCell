@@ -308,11 +308,11 @@ Button(root, text="Update Ring Buffer Size", command=update_ring_buffer_size, wi
 
 # Create the text box to display the serial data stream
 text_box = ScrolledText(root, width=120, height=5)
-text_box.grid(row=5, column=0, columnspan=5, padx=5, pady=5, sticky='W')
+text_box.grid(row=5, column=0, columnspan=6, padx=5, pady=5, sticky='W')
 
 # Create the text box to display the debug data
 log_text_box = ScrolledText(root, width=120, height=5)
-log_text_box.grid(row=6, column=0, columnspan=5, padx=5, pady=5, sticky='W')
+log_text_box.grid(row=6, column=0, columnspan=6, padx=5, pady=5, sticky='W')
 
 # Create the label to display the status
 status_label = Label(root, text="Disconnected", width=100, anchor='w', font=("default", 16))
