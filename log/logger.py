@@ -1,6 +1,5 @@
 from tkinter import *
 from tkinter.scrolledtext import ScrolledText
-from tkinter import filedialog
 import serial.tools.list_ports
 import serial
 from collections import deque
@@ -10,6 +9,7 @@ import subprocess
 import re
 import time
 import threading
+from queue import Queue
 
 root = Tk()
 
@@ -20,7 +20,7 @@ root.title("Relativity Engineering Serial Logger")
 # Create the serial connection, text box, and ring buffer variables
 ser = None
 text_box = None
-ring_buffer_size = IntVar(value=1000)
+ring_buffer_size = IntVar(value=10000)
 traceFileName = StringVar(value="trace")
 ring_buffer = deque(maxlen=ring_buffer_size.get())
 logging_enabled = False
@@ -36,24 +36,35 @@ counter = 0
 f_start_time = time.time()
 connection_enabled = False
 
+# Queue for thread communication
+status_update_queue = Queue()
 
-# Function to update the status label every second
+# Function to update GUI from the queue
+def update_gui_from_queue():
+    while not status_update_queue.empty():
+        message = status_update_queue.get()
+        status_label.config(text=message)
+        status_update_queue.task_done()
+    root.after(1000, update_gui_from_queue)
+
+# Function to update the status label every second using queue
 def update_status_label():
-    global minutes, seconds
+    global logging_enabled, start_time, minutes, seconds
     while logging_enabled:
-        elapsed_time = time.time() - start_time  # Calculate elapsed time
-        minutes, seconds = divmod(elapsed_time, 60)  # Convert elapsed time to minutes and seconds
-        status_label.config(text=f"Logging running for {int(minutes)} m {int(seconds)} s.")  # Update status label
-        time.sleep(1)  # Wait for 1 second
+        elapsed_time = time.time() - start_time
+        minutes, seconds = divmod(elapsed_time, 60)
+        status_update_queue.put(f"Logging running for {int(minutes)} m {int(seconds)} s.")
+        time.sleep(1)
 
+# Function to toggle logging on or off
 # Function to toggle logging on or off
 def toggle_logging():
     global logging_enabled, log_file, csv_writer, header_line, full_path, serial_log_file, start_time
     logging_enabled = not logging_enabled
     if logging_enabled:
         log_button.config(text="Stop Logging(space)")
-        start_time = time.time()  # Start the timer
-        threading.Thread(target=update_status_label).start()  # Start the update_status_label thread
+        start_time = time.time()
+        threading.Thread(target=update_status_label, daemon=True).start()
         try:
             script_dir = os.path.dirname(os.path.realpath(__file__))
             log_file_path = os.path.join(script_dir, "serial_log.csv")
@@ -250,6 +261,9 @@ def toggle_connection():
 def send_serial_data(data):
     if ser is not None and ser.isOpen():
         ser.write(data.encode())  # Encode the string to bytes
+
+# Initialize the periodic GUI update
+update_gui_from_queue()
 
 # Create the label and dropdown menu to select the COM port
 port_menu = StringVar(root, value="Select COM port")
