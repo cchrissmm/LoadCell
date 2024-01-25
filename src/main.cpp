@@ -44,16 +44,16 @@ SFE_UBLOX_GNSS myGNSS;
 using std::string;    // this eliminates the need to write std::string, you can just write string
 using std::to_string; // this eliminates the need to write std::to_string, you can just write to_string
 
-#define DOUT 2
-#define CLK 4
+#define LC_DOUT 4 // LOADCELL
+#define LC_CLK 2  // LOADCELL
 
-#define GPS_SDA 22
-#define GPS_SCL 23
+#define GPS_SDA 22 // GPS
+#define GPS_SCL 23 // GPS
 
 HX711 scale;
 
-float calibration_factor = -34200; // set this default
-float tareValue = 0;
+float LC_scaleValue = -34200; // set this default
+long LC_offsetValue = 0;
 string message = "";
 int systemErrorState = 0; // 0 = no error, 1 = error
 
@@ -63,36 +63,41 @@ void setup()
   Serial.println("Relativity DAQ v1.0.0");
   Serial.println("Setup started............................................");
 
-  scale.begin(DOUT, CLK);
-
   EEPROM.begin(512); // Initialize EEPROM with a size of 512 bytes
 
-  if (EEPROM.get(0, calibration_factor))
+  if (EEPROM.get(0, LC_scaleValue))
   {
     Serial.print("LC Calibration factor loaded from EEPROM: ");
-    Serial.println(calibration_factor);
+    Serial.println(LC_scaleValue);
+    if (LC_scaleValue < 30000 || LC_scaleValue > 40000)
+    {
+      Serial.println("ERROR: LC Calibration factor out of range");
+      //systemErrorState = 1;
+    }
   }
   else
   {
-    Serial.print("ERROR: LC Calibration factor not found in EEPROM, using default: ");
+    Serial.print("ERROR: LC Calibration factor not found in EEPROM ");
+    Serial.println(LC_scaleValue);
     systemErrorState = 1;
-    Serial.println(calibration_factor);
   }
 
-  if (EEPROM.get(4, tareValue))
+  if (EEPROM.get(4, LC_offsetValue))
   {
     Serial.print("LC Tare value loaded from EEPROM: ");
-    Serial.println(tareValue);
+    Serial.println(LC_offsetValue);
   }
   else
   {
-    Serial.print("ERROR: LC Tare value not found in EEPROM, using default: ");
+    Serial.print("ERROR: LC Tare value not found in EEPROM");
     systemErrorState = 1;
-    Serial.println(tareValue);
   }
-  scale.set_offset(tareValue);
-  scale.set_scale(calibration_factor);
-
+  
+  
+  scale.begin(LC_DOUT, LC_CLK);
+  scale.set_offset(LC_offsetValue);
+  scale.set_scale(LC_scaleValue);
+  
   Wire.begin(GPS_SDA, GPS_SCL); // SDA, SCL
 
   if (myGNSS.begin() == false)
@@ -132,47 +137,45 @@ void setup()
     }
   }
 
-  Serial.println("Setup complete............................................");
+  if (!systemErrorState)
+    Serial.println("Setup completed with no errors............................................");
+  else
+    Serial.println("Setup completed with errors............................................");
 }
 
 void loop()
 {
-  while (Serial.available())
+  if (Serial.available())
   {
-    char msgBit = Serial.read();
-    if (msgBit == '<') // Start of delimiter received
+    String str = Serial.readStringUntil('\n');
+    Serial.print("Received: ");
+    Serial.println(str);
+
+    if (str.startsWith("<LCZero>"))
     {
-      message = ""; // Reset message buffer
+      scale.tare();                 // Reset the scale to 0
+      Serial.print("Scale zeroed, offset value: ");
+      LC_offsetValue = scale.get_offset();
+      Serial.println(LC_offsetValue);
+      EEPROM.put(4, LC_offsetValue);
+      EEPROM.commit();
     }
-    else if (msgBit == '>') // End of delimiter received
+
+    if (str.startsWith("<LC10kg>")) // 10kg calibration
     {
-      if (message == "<LCZero>")
-      {
-        scale.tare(); // Reset the scale to 0
-        tareValue = scale.get_tare(); //get the value
-        scale.set_offset(tareValue);
-        EEPROM.put(4, tareValue);
-        EEPROM.commit();
-        Serial.print("Scale zeroed: ");
-        Serial.println(tareValue);
-        vTaskDelay(5000 / portTICK_PERIOD_MS);
-      }
-      if (message == "<LC10kg>") // 10kg calibration
-      {
-        float currentValue = scale.get_units(10);
-        float calibrationValue = currentValue / 980; // 10Kg = 980 Newtons
-        scale.set_scale(calibrationValue);
-        EEPROM.put(0, calibrationValue);
-        EEPROM.commit();
-        Serial.print("Calibration done at 10kg: ");
-        Serial.println(calibrationValue);
-        vTaskDelay(5000 / portTICK_PERIOD_MS);
-      }
-      message = ""; // Reset message buffer
+      scale.calibrate_scale(980,5);
+      LC_scaleValue = scale.get_scale();
+      Serial.print("Calibration done at 10kg, scale value: ");
+      Serial.println(LC_scaleValue);
+      EEPROM.put(0, LC_scaleValue);
+      EEPROM.commit();
     }
-    else // Message character received
+
+    if (str.startsWith("<resetESP>")) // 10kg calibration
     {
-      message += msgBit;
+      Serial.print("ESP Will reset");
+      //reset the esp32
+      ESP.restart();
     }
   }
 
@@ -184,12 +187,12 @@ void loop()
   long GPS_heading_105 = myGNSS.getHeading();
   float GPS_heading = GPS_heading_105 * 0.000001; // degrees
   long GPS_Seconds = myGNSS.getSecond();
-  float LC_Force = (scale.get_units(),3);
+  float LC_Force = scale.get_units(3);
 
   if (systemErrorState == 1)
   {
-    Serial.println("ERROR system error");
-    vTaskDelay(10000 / portTICK_PERIOD_MS);
+    // Serial.println("ERROR system error");
+    // vTaskDelay(10000 / portTICK_PERIOD_MS);
     return;
   }
   else
@@ -206,7 +209,7 @@ void loop()
     Serial.print(",");
     Serial.print(GPS_heading);
     Serial.print(",");
-    Serial.println(GPS_Seconds);
+    Serial.print(GPS_Seconds);
     Serial.print(",");
     Serial.println(LC_Force);
   }

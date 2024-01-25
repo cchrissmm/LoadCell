@@ -164,9 +164,12 @@ def read_serial():
 
             if line.startswith("DATA"):
                 data_line = line[4:].strip().split(",")
-                # Update the live data box with the value from the third column
-                live_data_box.delete(1.0, END)
-                live_data_box.insert(END, data_line[1])  # Index 2 corresponds to the third column
+                # Update the live data1 box = velocity
+                live_data1_box.delete(1.0, END)
+                live_data1_box.insert(END, data_line[1])  # Index 2 corresponds to the third column
+                # Update the live data2 box = load cell
+                live_data2_box.delete(1.0, END)
+                live_data2_box.insert(END, data_line[6])  # Index 2 corresponds to the third column
 
                 if logging_enabled and log_file is not None and csv_writer is not None:
                     csv_writer.writerow(data_line)
@@ -243,6 +246,11 @@ def toggle_connection():
         connect_button.config(text='Disconnect', command=toggle_connection)
     connection_enabled = not connection_enabled
 
+# Function to send serial data
+def send_serial_data(data):
+    if ser is not None and ser.isOpen():
+        ser.write(data.encode())  # Encode the string to bytes
+
 # Create the label and dropdown menu to select the COM port
 port_menu = StringVar(root, value="Select COM port")
 dropdown = Menubutton(root, textvariable=port_menu, relief=RAISED)
@@ -260,6 +268,18 @@ connect_button.grid(row=0, column=1, padx=5, pady=5)
 #create the autoscroll button
 autoscroll_button = Button(root, text="Autoscroll: ON", command=toggle_autoscroll, width=20)
 autoscroll_button.grid(row=0, column=2, padx=5, pady=5)
+
+# Create the zero button
+send_button = Button(root, text="Zero LC", command=lambda: send_serial_data("<LCZero>"), width=20)
+send_button.grid(row=0, column=3, padx=5, pady=5, sticky='W')
+
+# Create the 10kg button
+send_button = Button(root, text="Set 10Kg LC", command=lambda: send_serial_data("<LC10kg>"), width=20)
+send_button.grid(row=0, column=4, padx=5, pady=5, sticky='W')
+
+# Create the reset button
+send_button = Button(root, text="Reset ESP", command=lambda: send_serial_data("<resetESP>"), width=20)
+send_button.grid(row=0, column=5, padx=5, pady=5, sticky='W')
 
 # Create the start/stop logging button
 log_button = Button(root, text="Start Logging(space)", command=toggle_logging, width=20,font=("default", 16))
@@ -302,11 +322,17 @@ status_label.grid(row=7, column=0, columnspan=6, padx=5, pady=5, sticky='W')
 freq_label = Label(root, text="Disconnected", width=100, anchor='w', font=("default", 16))
 freq_label.grid(row=8, column=0, columnspan=6, padx=5, pady=5, sticky='W')
 
-# LiveDataBox
-live_data_label = Label(root, text="Speed (m/s):", font=("default", 16))
-live_data_label.grid(row=10, column=0, sticky='W')
-live_data_box = Text(root, width=10, height=1,font=("default", 50))
-live_data_box.grid(row=11, column=0, columnspan=2, padx=5, pady=5, sticky='W')
+# LiveDataBox 1
+live_data1_label = Label(root, text="Speed (m/s):", font=("default", 16))
+live_data1_label.grid(row=10, column=0, sticky='W')
+live_data1_box = Text(root, width=10, height=1,font=("default", 50))
+live_data1_box.grid(row=11, column=0, columnspan=2, padx=5, pady=5, sticky='W')
+
+# LiveDataBox 2
+live_data2_label = Label(root, text="Pedal Force (N):", font=("default", 16))
+live_data2_label.grid(row=10, column=2, sticky='W')
+live_data2_box = Text(root, width=10, height=1,font=("default", 50))
+live_data2_box.grid(row=11, column=2, columnspan=2, padx=5, pady=5, sticky='W')
 
 
 # Start reading data from the serial port
