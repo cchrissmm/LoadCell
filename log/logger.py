@@ -156,12 +156,10 @@ def read_serial():
 
     if ser is not None and ser.isOpen():
         try:
-            line = ser.readline().decode("utf-8")
-            ring_buffer.append(line)
-            text_box.delete(1.0, END)
-            text_box.insert(END, ''.join(ring_buffer))
-            if autoscroll_enabled:
-                text_box.see(END)
+            line = ser.readline().decode("utf-8").strip()
+            if line:  # Check if the line is not empty
+                text_box.delete(1.0, END)  # Clear the text box
+                text_box.insert(END, line)  # Insert the latest line
 
             if line.startswith("HEAD"):
                 header_line = line[4:].strip().split(",")
@@ -187,9 +185,12 @@ def read_serial():
                 
             if not line.startswith("HEAD") and not line.startswith("DATA"):
                 if serial_log_file is not None and logging_enabled:
-                    serial_log_file.write(line)
-                log_text_box.insert(END, line)
+                    serial_log_file.write(line + "\n")  # Add a newline character
+                log_text_box.insert(END, line + "\n")  # Add the line with a newline to the log text box
                 log_text_box.see(END)
+
+        except Exception as e:
+            print(f"Error reading serial data: {e}")
 
         except:
             pass
@@ -321,11 +322,11 @@ ring_buffer_entry.grid(row=4, column=1, padx=5, pady=5)
 Button(root, text="Update Ring Buffer Size", command=update_ring_buffer_size, width=25).grid(row=4, column=2, padx=5, pady=5)
 
 # Create the text box to display the serial data stream
-text_box = ScrolledText(root, width=120, height=5)
+text_box = ScrolledText(root, width=120, height=2)
 text_box.grid(row=5, column=0, columnspan=6, padx=5, pady=5, sticky='W')
 
 # Create the text box to display the debug data
-log_text_box = ScrolledText(root, width=120, height=5)
+log_text_box = ScrolledText(root, width=120, height=8)
 log_text_box.grid(row=6, column=0, columnspan=6, padx=5, pady=5, sticky='W')
 
 # Create the label to display the status
