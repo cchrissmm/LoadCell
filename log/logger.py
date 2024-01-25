@@ -157,9 +157,10 @@ def read_serial():
     if ser is not None and ser.isOpen():
         try:
             line = ser.readline().decode("utf-8").strip()
-            if line:  # Check if the line is not empty
-                text_box.delete(1.0, END)  # Clear the text box
-                text_box.insert(END, line)  # Insert the latest line
+            #show raw data in box
+            #if line:  # Check if the line is not empty
+                #text_box.delete(1.0, END)  # Clear the text box
+                #text_box.insert(END, line)  # Insert the latest line
 
             if line.startswith("HEAD"):
                 header_line = line[4:].strip().split(",")
@@ -179,6 +180,8 @@ def read_serial():
                 # Update the live data2 box = load cell
                 live_data2_box.delete(1.0, END)
                 live_data2_box.insert(END, data_line[6])  # Index 2 corresponds to the third column
+                live_data3_box.delete(1.0, END)
+                live_data3_box.insert(END, data_line[5])  # Index 2 corresponds to the third column
 
                 if logging_enabled and log_file is not None and csv_writer is not None:
                     csv_writer.writerow(data_line)
@@ -349,7 +352,11 @@ live_data2_label.grid(row=10, column=2, sticky='W')
 live_data2_box = Text(root, width=10, height=1,font=("default", 50))
 live_data2_box.grid(row=11, column=2, columnspan=2, padx=5, pady=5, sticky='W')
 
-
+# LiveDataBox 2
+live_data3_label = Label(root, text="Alive Counter", font=("default", 10))
+live_data3_label.grid(row=10, column=4, sticky='W')
+live_data3_box = Text(root, width=5, height=1,font=("default", 25))
+live_data3_box.grid(row=11, column=4, columnspan=1, padx=5, pady=5, sticky='W')
 # Start reading data from the serial port
 read_serial()
 
