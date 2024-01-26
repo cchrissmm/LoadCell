@@ -16,14 +16,24 @@ using std::to_string; // this eliminates the need to write std::to_string, you c
 
 #define GPS_SDA 22 // GPS
 #define GPS_SCL 23 // GPS
+#define GPS_NAVFREQ 20
 
 HX711 scale;
+
+float IMU_Roll = 999;
+float  IMU_Pitch = 999;
+float  IMU_Yaw = 999;
+
+int IMU_xAccel = 999999; 
+int IMU_yAccel = 999999;
+int IMU_zAccel = 999999;
 
 float LC_scaleValue = -34200; // set this default
 long LC_offsetValue = 0;
 float LC_Force = 9999999;
 string message = "";
 int systemErrorState = 0; // 0 = no error, 1 = error
+int counter = 0;
 
 void setup()
 {
@@ -77,7 +87,7 @@ void setup()
 
   myGNSS.setI2COutput(COM_TYPE_UBX); // Set the I2C port to output UBX only (turn off NMEA noise)
 
-  if (myGNSS.setNavigationFrequency(30))
+  if (myGNSS.setNavigationFrequency(GPS_NAVFREQ))
   {
     Serial.println(F("Set Nav Frequency Successful"));
   }
@@ -155,12 +165,30 @@ void loop()
   float GPS_groundSpeed = GPS_groundSpeed_mms * 0.0001;
   long GPS_heading_105 = myGNSS.getHeading();
   float GPS_heading = GPS_heading_105 * 0.000001; // degrees
-  long GPS_Seconds = myGNSS.getSecond();
+  int GPS_Seconds = myGNSS.getSecond();
+  int GPS_Minutes = myGNSS.getMinute();
+  int GPS_Hours = myGNSS.getHour();
+  int GPS_Day = myGNSS.getDay();
+  int GPS_Month = myGNSS.getMonth();
+
 
   if(scale.is_ready()) { // only proceed if HX711 is ready to read
   LC_Force = scale.get_units();
   }
-  
+
+  if (myGNSS.getEsfAlignment(5)) // Poll new ESF ALG data
+  {
+  IMU_Roll = myGNSS.getESFroll();
+  IMU_Pitch = myGNSS.getESFpitch();
+  IMU_Yaw = myGNSS.getESFyaw();
+  }
+
+if (myGNSS.getEsfIns(5)) // Poll new ESF INS data
+  {
+    IMU_xAccel = myGNSS.packetUBXESFINS->data.xAccel;  
+    IMU_yAccel = myGNSS.packetUBXESFINS->data.yAccel;  
+    IMU_zAccel = myGNSS.packetUBXESFINS->data.zAccel;
+  }
 
   if (systemErrorState == 1)
   {
@@ -170,7 +198,12 @@ void loop()
   }
   else
   {
-    Serial.println("HEADtime,GPS_groundSpeed,GPS_lat,GPS_long,GPS_heading,GPS_Seconds,LC_Force");
+    counter += 1;
+
+    if(counter > 90) {
+    Serial.println("HEADtime,GPS_groundSpeed,GPS_lat,GPS_long,GPS_heading,GPS_Seconds, GPS_Minutes, GPS_Hours_GPS_Day,LC_Force,IMU_roll,IMU_pitch,IMU_yaw, IMU_xAccel, IMU_yAccel, IMU_zAccel");
+    counter = 0;  
+  }
     Serial.print("DATA");
     Serial.print(time);
     Serial.print(",");
@@ -184,6 +217,26 @@ void loop()
     Serial.print(",");
     Serial.print(GPS_Seconds);
     Serial.print(",");
-    Serial.println(LC_Force);
+    Serial.print(GPS_Minutes);
+    Serial.print(",");
+    Serial.print(GPS_Hours);
+    Serial.print(",");
+    Serial.print(GPS_Day);
+    Serial.print(",");
+    Serial.print(GPS_Month);
+    Serial.print(",");
+    Serial.print(LC_Force);
+    Serial.print(",");
+    Serial.print(IMU_Roll);
+    Serial.print(",");
+    Serial.print(IMU_Pitch);
+    Serial.print(",");
+    Serial.print(IMU_Yaw);
+    Serial.print(",");
+    Serial.print(IMU_xAccel);
+    Serial.print(",");
+    Serial.print(IMU_yAccel);
+    Serial.print(",");
+    Serial.println(IMU_zAccel);
   }
 }
