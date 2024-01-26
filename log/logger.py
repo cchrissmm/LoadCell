@@ -57,7 +57,6 @@ def update_status_label():
         time.sleep(1)
 
 # Function to toggle logging on or off
-# Function to toggle logging on or off
 def toggle_logging():
     global logging_enabled, log_file, csv_writer, header_line, full_path, serial_log_file, start_time
     logging_enabled = not logging_enabled
@@ -115,10 +114,12 @@ def check_csv_file(file_path):
                 num_columns = len(row)
                 csv_writer.writerow(row)
                 continue
-            
+
             # If the number of columns in the row does not match the number of columns in the header, or if the row contains non-numeric values, add a '#' character to the beginning of the row
-            if len(row) != num_columns or not all(re.match(r'^-?\d+\.?\d*$', field) for field in row):
-                row = ['#' + field for field in row]
+            #if len(row) != num_columns or not all(re.match(r'^-?\d+\.?\d*$', field) for field in row):
+                #row = ['#' + field for field in row]
+                #Faultcounter += 1
+                #text_box.insert(END, f"Corrupt data row received \n{counter}")
             
             csv_writer.writerow(row)
 
@@ -164,13 +165,7 @@ def read_serial():
 
             if line.startswith("HEAD"):
                 header_line = line[4:].strip().split(",")
-                counter += 1
-                if counter >= 100:
-                    elapsed_time = time.time() - f_start_time  # Calculate elapsed time
-                    frequency = counter / elapsed_time  # Calculate frequency
-                    freq_label.config(text=f"Incoming data streaming at {int(frequency)} Hz.")
-                    counter = 0  # Reset the counter
-                    f_start_time = time.time()  # Reset the timer
+                
 
             if line.startswith("DATA"):
                 data_line = line[4:].strip().split(",")
@@ -179,9 +174,19 @@ def read_serial():
                 live_data1_box.insert(END, data_line[1])  # Index 2 corresponds to the third column
                 # Update the live data2 box = load cell
                 live_data2_box.delete(1.0, END)
-                live_data2_box.insert(END, data_line[6])  # Index 2 corresponds to the third column
+                live_data2_box.insert(END, str(data_line[10]))  # Index 2 corresponds to the third column
+                #GPS Time
                 live_data3_box.delete(1.0, END)
-                live_data3_box.insert(END, data_line[5])  # Index 2 corresponds to the third column
+                gps_time = ':'.join([str(data_line[7]), str(data_line[6]), str(data_line[5])])
+                live_data3_box.insert(END, gps_time)  # Index 2 corresponds to the third column
+                
+                counter += 1
+                if counter >= 60:
+                    elapsed_time = time.time() - f_start_time  # Calculate elapsed time
+                    frequency = counter / elapsed_time  # Calculate frequency
+                    freq_label.config(text=f"Incoming data streaming at {int(frequency)} Hz.")
+                    counter = 0  # Reset the counter
+                    f_start_time = time.time()  # Reset the timer
 
                 if logging_enabled and log_file is not None and csv_writer is not None:
                     csv_writer.writerow(data_line)
@@ -210,7 +215,7 @@ def save_trace():
     files = os.listdir()
 
     # Find all files that start with the entered filename and end with a number
-    matching_files = [file for file in files if re.match(f"{filename}_\d+\.csv", file)]
+    matching_files = [file for file in files if re.match(f"{filename}_\\d+\\.csv", file)]
 
     # Find the highest number among these files
     highest_number = max((int(file.split('_')[-1].split('.')[0]) for file in matching_files), default=0)
@@ -353,9 +358,9 @@ live_data2_box = Text(root, width=10, height=1,font=("default", 50))
 live_data2_box.grid(row=11, column=2, columnspan=2, padx=5, pady=5, sticky='W')
 
 # LiveDataBox 2
-live_data3_label = Label(root, text="Alive Counter", font=("default", 10))
+live_data3_label = Label(root, text="GPS Time", font=("default", 15))
 live_data3_label.grid(row=10, column=4, sticky='W')
-live_data3_box = Text(root, width=5, height=1,font=("default", 25))
+live_data3_box = Text(root, width=15, height=1,font=("default", 15))
 live_data3_box.grid(row=11, column=4, columnspan=1, padx=5, pady=5, sticky='W')
 # Start reading data from the serial port
 read_serial()

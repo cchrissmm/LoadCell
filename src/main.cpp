@@ -200,8 +200,8 @@ if (myGNSS.getEsfIns(5)) // Poll new ESF INS data
   {
     counter += 1;
 
-    if(counter > 90) {
-    Serial.println("HEADtime,GPS_groundSpeed,GPS_lat,GPS_long,GPS_heading,GPS_Seconds, GPS_Minutes, GPS_Hours_GPS_Day,LC_Force,IMU_roll,IMU_pitch,IMU_yaw, IMU_xAccel, IMU_yAccel, IMU_zAccel");
+    if(counter > 40) {
+    Serial.println("HEADtime,GPS_groundSpeed,GPS_lat,GPS_long,GPS_heading,GPS_Seconds,GPS_Minutes,GPS_Hours,GPS_Day,GPS_Month,LC_Force,IMU_roll,IMU_pitch,IMU_yaw,IMU_xAccel,IMU_yAccel,IMU_zAccel");
     counter = 0;  
   }
     Serial.print("DATA");
