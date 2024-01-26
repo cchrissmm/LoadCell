@@ -1,24 +1,20 @@
 #include <Wire.h> //Needed for I2C to GPS
 #include <EEPROM.h>
-
 #include "SparkFun_u-blox_GNSS_Arduino_Library.h" //Click here to get the library: http://librarymanager/All#SparkFun_u-blox_GNSS
-SFE_UBLOX_GNSS myGNSS;
-
 #include "HX711.h"
 #include <Arduino.h>
-
 #include <string.h>
 using std::string;    // this eliminates the need to write std::string, you can just write string
 using std::to_string; // this eliminates the need to write std::to_string, you can just write to_string
 
 #define LC_DOUT 4 // LOADCELL
 #define LC_CLK 2  // LOADCELL
-
 #define GPS_SDA 22 // GPS
 #define GPS_SCL 23 // GPS
 #define GPS_NAVFREQ 20
 
 HX711 scale;
+SFE_UBLOX_GNSS myGNSS;
 
 float IMU_Roll = 999;
 float  IMU_Pitch = 999;
