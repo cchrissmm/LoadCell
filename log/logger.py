@@ -179,6 +179,15 @@ def read_serial():
                 live_data3_box.delete(1.0, END)
                 gps_time = ':'.join([str(data_line[7]), str(data_line[6]), str(data_line[5])])
                 live_data3_box.insert(END, gps_time)  # Index 2 corresponds to the third column
+                # GYS X
+                GYSX_label.delete(1.0, END)
+                GYSX_label.insert(END, str(data_line[17]))  # Index 2 corresponds to the third column
+                 # GYS Y
+                GYSY_label.delete(1.0, END)
+                GYSY_label.insert(END, str(data_line[18]))  # Index 2 corresponds to the third column
+                 # GYS Z
+                GYSZ_label.delete(1.0, END)
+                GYSZ_label.insert(END, str(data_line[19]))  # Index 2 corresponds to the third column
                 
                 counter += 1
                 if counter >= 60:
@@ -300,17 +309,25 @@ send_button.grid(row=1, column=4, padx=5, pady=5, sticky='W')
 send_button = Button(root, text="Reset ESP", command=lambda: send_serial_data("<resetESP>"))
 send_button.grid(row=2, column=4, padx=5, pady=5, sticky='W')
 
-# CalX Button
-send_button = Button(root, text="Cal GYS X", command=lambda: send_serial_data("<CALX>"))
+# CalGYS Button
+send_button = Button(root, text="Cal Event", command=lambda: send_serial_data("<CALGYS>"))
 send_button.grid(row=3, column=4, padx=5, pady=5, sticky='W')
 
-# CalY Button
-send_button = Button(root, text="Cal GYS Y", command=lambda: send_serial_data("<CALY>"))
+# SaveCalGYS Button
+send_button = Button(root, text="Save Cal", command=lambda: send_serial_data("<SAVEGYS>"))
 send_button.grid(row=4, column=4, padx=5, pady=5, sticky='W')
 
-# CalZ Button
-send_button = Button(root, text="Cal GYS Z", command=lambda: send_serial_data("<CALZ>"))
-send_button.grid(row=5, column=4, padx=5, pady=5, sticky='W')
+# GYS X
+GYSX_label = Text(root, width=10, height=1,font=("default", 12))
+GYSX_label.grid(row=5, column=4, columnspan=4, padx=5, pady=5, sticky='W')
+
+# GYZ Y
+GYSY_label = Text(root, width=10, height=1,font=("default", 12))
+GYSY_label.grid(row=6, column=4, columnspan=4, padx=5, pady=5, sticky='W')
+
+# GYS Z
+GYSZ_label = Text(root, width=10, height=1,font=("default", 12))
+GYSZ_label.grid(row=7, column=4, columnspan=4, padx=5, pady=5, sticky='W')
 
 # Create an entry to specify the ring buffer size
 Label(root, text="Ring buffer size #samples").grid(row=1, column=0, padx=5, pady=5)
@@ -366,6 +383,8 @@ live_data3_label = Label(root, text="GPS Time", font=("default", 15))
 live_data3_label.grid(row=10, column=4, sticky='W')
 live_data3_box = Text(root, width=10, height=1,font=("default", 15))
 live_data3_box.grid(row=11, column=4, columnspan=1, padx=5, pady=5, sticky='W')
+
+
 # Start reading data from the serial port
 read_serial()
 
