@@ -300,27 +300,35 @@ send_button.grid(row=1, column=4, padx=5, pady=5, sticky='W')
 send_button = Button(root, text="Reset ESP", command=lambda: send_serial_data("<resetESP>"))
 send_button.grid(row=2, column=4, padx=5, pady=5, sticky='W')
 
+# CalX Button
+send_button = Button(root, text="Cal GYS X", command=lambda: send_serial_data("<CALX>"))
+send_button.grid(row=3, column=4, padx=5, pady=5, sticky='W')
+
+# CalY Button
+send_button = Button(root, text="Cal GYS Y", command=lambda: send_serial_data("<CALY>"))
+send_button.grid(row=4, column=4, padx=5, pady=5, sticky='W')
+
+# CalZ Button
+send_button = Button(root, text="Cal GYS Z", command=lambda: send_serial_data("<CALZ>"))
+send_button.grid(row=5, column=4, padx=5, pady=5, sticky='W')
+
 # Create an entry to specify the ring buffer size
 Label(root, text="Ring buffer size #samples").grid(row=1, column=0, padx=5, pady=5)
 ring_buffer_entry = Entry(root, textvariable=ring_buffer_size)
 ring_buffer_entry.grid(row=1, column=1, padx=5, pady=5)
 Button(root, text="Update Ring Buffer Size", command=update_ring_buffer_size).grid(row=1, column=2, padx=5, pady=5)
 
-# Create the text box to display the serial data stream
-text_box = ScrolledText(root, height=2)
-text_box.grid(row=5, column=0, columnspan=6, padx=5, pady=5, sticky='W')
-
 # Create the text box to display the debug data
-log_text_box = ScrolledText(root, height=8)
-log_text_box.grid(row=6, column=0, columnspan=3, padx=5, pady=5, sticky='W')
+log_text_box = ScrolledText(root,font=("default", 12),height = 6, width = 80)
+log_text_box.grid(row=3, column=0, columnspan=4, rowspan=3,padx=5, pady=5, sticky='W')
 
 # Create the label to display the status
 status_label = Label(root, text="Disconnected",  anchor='w', font=("default", 16))
-status_label.grid(row=7, column=0, columnspan=3, padx=5, pady=5, sticky='W')
+status_label.grid(row=7, column=0, columnspan=4, padx=5, pady=5, sticky='W')
 
 # Create the label to display the frequency
 freq_label = Label(root, text="No data",  anchor='w', font=("default", 16))
-freq_label.grid(row=8, column=0, columnspan=6, padx=5, pady=5, sticky='W')
+freq_label.grid(row=8, column=0, columnspan=4, padx=5, pady=5, sticky='W')
 
 # Create the start/stop logging button
 log_button = Button(root, text="Start Logging(space)", command=toggle_logging, font=("default", 14))
