@@ -285,65 +285,61 @@ dropdown.bind('<Button-1>', lambda event: update_ports(menu))
 
 # Create the connect and disconnect buttons
 # Create the toggle button
-connect_button = Button(root, text="Connect", command=toggle_connection, width=20)
+connect_button = Button(root, text="Connect", command=toggle_connection)
 connect_button.grid(row=0, column=1, padx=5, pady=5)
 
-#create the autoscroll button
-autoscroll_button = Button(root, text="Autoscroll: ON", command=toggle_autoscroll, width=20)
-autoscroll_button.grid(row=0, column=2, padx=5, pady=5)
-
 # Create the zero button
-send_button = Button(root, text="Zero LC", command=lambda: send_serial_data("<LCZero>"), width=20)
-send_button.grid(row=0, column=3, padx=5, pady=5, sticky='W')
-
-# Create the 10kg button
-send_button = Button(root, text="Set 10Kg LC", command=lambda: send_serial_data("<LC10kg>"), width=20)
+send_button = Button(root, text="Zero Load Cell", command=lambda: send_serial_data("<LCZero>"))
 send_button.grid(row=0, column=4, padx=5, pady=5, sticky='W')
 
+# Create the 10kg button
+send_button = Button(root, text="Set 10Kg Load Cell", command=lambda: send_serial_data("<LC10kg>"))
+send_button.grid(row=1, column=4, padx=5, pady=5, sticky='W')
+
 # Create the reset button
-send_button = Button(root, text="Reset ESP", command=lambda: send_serial_data("<resetESP>"), width=20)
-send_button.grid(row=0, column=5, padx=5, pady=5, sticky='W')
+send_button = Button(root, text="Reset ESP", command=lambda: send_serial_data("<resetESP>"))
+send_button.grid(row=2, column=4, padx=5, pady=5, sticky='W')
+
+# Create an entry to specify the ring buffer size
+Label(root, text="Ring buffer size #samples").grid(row=1, column=0, padx=5, pady=5)
+ring_buffer_entry = Entry(root, textvariable=ring_buffer_size)
+ring_buffer_entry.grid(row=1, column=1, padx=5, pady=5)
+Button(root, text="Update Ring Buffer Size", command=update_ring_buffer_size).grid(row=1, column=2, padx=5, pady=5)
+
+# Create the text box to display the serial data stream
+text_box = ScrolledText(root, height=2)
+text_box.grid(row=5, column=0, columnspan=6, padx=5, pady=5, sticky='W')
+
+# Create the text box to display the debug data
+log_text_box = ScrolledText(root, height=8)
+log_text_box.grid(row=6, column=0, columnspan=3, padx=5, pady=5, sticky='W')
+
+# Create the label to display the status
+status_label = Label(root, text="Disconnected",  anchor='w', font=("default", 16))
+status_label.grid(row=7, column=0, columnspan=3, padx=5, pady=5, sticky='W')
+
+# Create the label to display the frequency
+freq_label = Label(root, text="No data",  anchor='w', font=("default", 16))
+freq_label.grid(row=8, column=0, columnspan=6, padx=5, pady=5, sticky='W')
 
 # Create the start/stop logging button
-log_button = Button(root, text="Start Logging(space)", command=toggle_logging, width=20,font=("default", 16))
+log_button = Button(root, text="Start Logging(space)", command=toggle_logging, font=("default", 14))
 log_button.grid(row=9, column=0, padx=5, pady=5)
 # Bind the spacebar to the start stop logging function
 root.bind('<space>', lambda event: toggle_logging())
 
 # Create the launch Uniview button
-uniview_button = Button(root, text="Open Uniview(u)", font=("default", 16), command=lambda: open_uniview(full_path))
+uniview_button = Button(root, text="Open Uniview(u)", font=("default", 14), command=lambda: open_uniview(full_path))
 uniview_button.grid(row=9, column=1, padx=5, pady=5)
 root.bind('u', lambda event: open_uniview(full_path))
 
 # Create the save trace button
-Button(root, text="Save Trace(s)", command=save_trace, width=20,font=("default", 16)).grid(row=9, column=2, padx=5, pady=5)
+Button(root, text="Save Trace(s)", command=save_trace, font=("default", 14)).grid(row=9, column=2, padx=5, pady=5)
 root.bind('s', lambda event: save_trace())
 
 # Create an entry to specify the save filename
-traceFile_entry = Entry(root, textvariable=traceFileName, width=20,font=("default", 16))
+traceFile_entry = Entry(root, textvariable=traceFileName, width=15,font=("default", 14))
 traceFile_entry.grid(row=9, column=3, padx=5, pady=5)
-
-# Create an entry to specify the ring buffer size
-Label(root, text="Ring buffer size (#measurments):").grid(row=4, column=0, padx=5, pady=5)
-ring_buffer_entry = Entry(root, textvariable=ring_buffer_size, width=10)
-ring_buffer_entry.grid(row=4, column=1, padx=5, pady=5)
-Button(root, text="Update Ring Buffer Size", command=update_ring_buffer_size, width=25).grid(row=4, column=2, padx=5, pady=5)
-
-# Create the text box to display the serial data stream
-text_box = ScrolledText(root, width=120, height=2)
-text_box.grid(row=5, column=0, columnspan=6, padx=5, pady=5, sticky='W')
-
-# Create the text box to display the debug data
-log_text_box = ScrolledText(root, width=120, height=8)
-log_text_box.grid(row=6, column=0, columnspan=6, padx=5, pady=5, sticky='W')
-
-# Create the label to display the status
-status_label = Label(root, text="Disconnected", width=100, anchor='w', font=("default", 16))
-status_label.grid(row=7, column=0, columnspan=6, padx=5, pady=5, sticky='W')
-
-# Create the label to display the frequency
-freq_label = Label(root, text="Disconnected", width=100, anchor='w', font=("default", 16))
-freq_label.grid(row=8, column=0, columnspan=6, padx=5, pady=5, sticky='W')
 
 # LiveDataBox 1
 live_data1_label = Label(root, text="Speed (m/s):", font=("default", 16))
@@ -360,7 +356,7 @@ live_data2_box.grid(row=11, column=2, columnspan=2, padx=5, pady=5, sticky='W')
 # LiveDataBox 2
 live_data3_label = Label(root, text="GPS Time", font=("default", 15))
 live_data3_label.grid(row=10, column=4, sticky='W')
-live_data3_box = Text(root, width=15, height=1,font=("default", 15))
+live_data3_box = Text(root, width=10, height=1,font=("default", 15))
 live_data3_box.grid(row=11, column=4, columnspan=1, padx=5, pady=5, sticky='W')
 # Start reading data from the serial port
 read_serial()

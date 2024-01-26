@@ -1,22 +1,19 @@
-GPS_Seconds  nobit 1 unit=56 scmin=-259.6 scmax=64.9
-LC_Force  nobit 1 unit=0.37 scansc
- GPS_Hours_GPS_Day  nobit 1 unit=4 scmin=0 scmax=0
- GPS_Minutes  nobit 1 unit=23 scmin=0 scmax=0
- IMU_xAccel  nobit 1 unit=999.00 scmin=0 scmax=0
- IMU_yAccel  nobit 1 unit=999999 scmin=0 scmax=0
- IMU_zAccel  nobit 1 unit=999999 scmin=0 scmax=0
-GPS_Month  nobit 1 unit=26 scmin=0 scmax=0
-GPS_Seconds  nobit 1 unit=24 scmin=0 scmax=0
-GPS_groundSpeed  nobit 1 unit=0.02 scmin=0 scmax=0
-GPS_heading  nobit 1 unit=6.44 scmin=0 scmax=0
-GPS_lat  nobit 1 unit=-381574757 scmin=0 scmax=0
-GPS_long  nobit 1 unit=1445565125 scmin=0 scmax=0
+ADXL_x  nobit 1 unit=-2 scmin=0 scmax=0
+ADXL_y  nobit 1 unit=-38 scmin=0 scmax=0
+ADXL_z  nobit 1 unit=153 scmin=0 scmax=0
+GPS_Day  nobit 1 unit=26 scmin=0 scmax=0
+GPS_Hours  nobit 1 unit=8 scmin=0 scmax=0
+GPS_Minutes  nobit 1 unit=41 scmin=0 scmax=0
+GPS_Month  nobit 1 unit=1 scmin=0 scmax=0
+GPS_Seconds  nobit 1 unit=15 scmin=0 scmax=0
+GPS_groundSpeed  nobit 1 unit=0.00 scmin=0 scmax=0
+GPS_heading  nobit 1 unit=26.23 scmin=0 scmax=0
+GPS_lat  nobit 1 unit=-381574986 scmin=0 scmax=0
+GPS_long  nobit 1 unit=1445564038 scmin=0 scmax=0
 IMU_pitch  nobit 1 unit=999.00 scmin=0 scmax=0
-IMU_roll  nobit 1 unit=-4.71 scmin=0 scmax=0
+IMU_roll  nobit 1 unit=999.00 scmin=0 scmax=0
+IMU_xAccel  nobit 1 unit=999999 scmin=0 scmax=0
+IMU_yAccel  nobit 1 unit=999999 scmin=0 scmax=0
 IMU_yaw  nobit 1 unit=999.00 scmin=0 scmax=0
-LC_Force  nobit 1 unit=1 scmin=0 scmax=0
-V15  nobit 1 unit=999999 scmin=0 scmax=0
-GPS_groundSpeed  nobit 2 unit=0.02 scmin=-0.165 scmax=0.11
-GPS_heading  nobit 3 unit=1.63 scmin=-77.69 scmax=117.61
-GPS_lat  nobit 4 unit=-381550328 scmin=-3.43418e+008 scmax=-5.34203e+008
-GPS_long  nobit 5 unit=1445568498 scmin=1.44556e+009 scmax=2.16835e+009
+IMU_zAccel  nobit 1 unit=999999 scmin=0 scmax=0
+LC_Force  nobit 1 unit=-4.64 scmin=0 scmax=0
