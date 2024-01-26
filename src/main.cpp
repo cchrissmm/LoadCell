@@ -2,6 +2,7 @@
 #include <EEPROM.h>
 #include "SparkFun_u-blox_GNSS_Arduino_Library.h" //Click here to get the library: http://librarymanager/All#SparkFun_u-blox_GNSS
 #include "HX711.h"
+#include <SparkFun_ADXL345.h> 
 #include <Arduino.h>
 #include <string.h>
 using std::string;    // this eliminates the need to write std::string, you can just write string
@@ -30,6 +31,8 @@ float LC_Force = 9999999;
 string message = "";
 int systemErrorState = 0; // 0 = no error, 1 = error
 int counter = 0;
+
+TwoWire I2Cone = TwoWire(0); //GPS I2C bus
 
 void setup()
 {
@@ -73,9 +76,9 @@ void setup()
   scale.set_scale(LC_scaleValue);
   scale.set_raw_mode(); 
   
-  Wire.begin(GPS_SDA, GPS_SCL); // SDA, SCL
+  I2Cone.begin(GPS_SDA, GPS_SCL, 400000); // SDA, SCL
 
-  if (myGNSS.begin() == false)
+  if (myGNSS.begin(I2Cone) == false)
   {
     Serial.println(F("ERROR u-blox GNSS module not detected at I2C address. Please check wiring."));
     systemErrorState = 1;
