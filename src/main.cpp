@@ -2,26 +2,30 @@
 #include <EEPROM.h>
 #include "SparkFun_u-blox_GNSS_Arduino_Library.h" //Click here to get the library: http://librarymanager/All#SparkFun_u-blox_GNSS
 #include "HX711.h"
-#include <SparkFun_ADXL345.h> 
+#include <SparkFun_ADXL345.h>
 #include <Arduino.h>
 #include <string.h>
 using std::string;    // this eliminates the need to write std::string, you can just write string
 using std::to_string; // this eliminates the need to write std::to_string, you can just write to_string
 
-#define LC_DOUT 4 // LOADCELL
-#define LC_CLK 2  // LOADCELL
+#define LC_DOUT 4  // LOADCELL
+#define LC_CLK 2   // LOADCELL
 #define GPS_SDA 22 // GPS
 #define GPS_SCL 23 // GPS
 #define GPS_NAVFREQ 20
+#define ADXL_SDA 25   // ADXL345
+#define ADXL_SCL 26   // ADXL345
+#define ADXL_RANGE 16 // 2,4,8,16
 
 HX711 scale;
 SFE_UBLOX_GNSS myGNSS;
+ADXL345 adxl = ADXL345();
 
 float IMU_Roll = 999;
-float  IMU_Pitch = 999;
-float  IMU_Yaw = 999;
+float IMU_Pitch = 999;
+float IMU_Yaw = 999;
 
-int IMU_xAccel = 999999; 
+int IMU_xAccel = 999999;
 int IMU_yAccel = 999999;
 int IMU_zAccel = 999999;
 
@@ -32,7 +36,9 @@ string message = "";
 int systemErrorState = 0; // 0 = no error, 1 = error
 int counter = 0;
 
-TwoWire I2Cone = TwoWire(0); //GPS I2C bus
+int ADXL_x, ADXL_y, ADXL_z;
+
+TwoWire I2Cone = TwoWire(0); // GPS I2C bus
 
 void setup()
 {
@@ -49,7 +55,7 @@ void setup()
     if (LC_scaleValue < 30000 || LC_scaleValue > 40000)
     {
       Serial.println("ERROR: LC Calibration factor out of range");
-      //systemErrorState = 1;
+      // systemErrorState = 1;
     }
   }
   else
@@ -69,13 +75,12 @@ void setup()
     Serial.print("ERROR: LC Tare value not found in EEPROM");
     systemErrorState = 1;
   }
-  
-  
+
   scale.begin(LC_DOUT, LC_CLK);
   scale.set_offset(LC_offsetValue);
   scale.set_scale(LC_scaleValue);
-  scale.set_raw_mode(); 
-  
+  scale.set_raw_mode();
+
   I2Cone.begin(GPS_SDA, GPS_SCL, 400000); // SDA, SCL
 
   if (myGNSS.begin(I2Cone) == false)
@@ -115,6 +120,9 @@ void setup()
     }
   }
 
+  adxl.powerOn(ADXL_SDA, ADXL_SCL);
+  adxl.setRangeSetting(ADXL_RANGE);
+
   if (!systemErrorState)
     Serial.println("Setup completed with no errors............................................");
   else
@@ -131,7 +139,7 @@ void loop()
 
     if (str.startsWith("<LCZero>"))
     {
-      scale.tare();                 // Reset the scale to 0
+      scale.tare(); // Reset the scale to 0
       Serial.print("Scale zeroed, offset value: ");
       LC_offsetValue = scale.get_offset();
       Serial.println(LC_offsetValue);
@@ -141,7 +149,7 @@ void loop()
 
     if (str.startsWith("<LC10kg>")) // 10kg calibration
     {
-      scale.calibrate_scale(980,5);
+      scale.calibrate_scale(980, 5);
       LC_scaleValue = scale.get_scale();
       Serial.print("Calibration done at 10kg, scale value: ");
       Serial.println(LC_scaleValue);
@@ -152,7 +160,7 @@ void loop()
     if (str.startsWith("<resetESP>")) // 10kg calibration
     {
       Serial.print("ESP Will reset");
-      //reset the esp32
+      // reset the esp32
       ESP.restart();
     }
   }
@@ -170,24 +178,26 @@ void loop()
   int GPS_Day = myGNSS.getDay();
   int GPS_Month = myGNSS.getMonth();
 
-
-  if(scale.is_ready()) { // only proceed if HX711 is ready to read
-  LC_Force = scale.get_units();
+  if (scale.is_ready())
+  { // only proceed if HX711 is ready to read
+    LC_Force = scale.get_units();
   }
 
   if (myGNSS.getEsfAlignment(5)) // Poll new ESF ALG data
   {
-  IMU_Roll = myGNSS.getESFroll();
-  IMU_Pitch = myGNSS.getESFpitch();
-  IMU_Yaw = myGNSS.getESFyaw();
+    IMU_Roll = myGNSS.getESFroll();
+    IMU_Pitch = myGNSS.getESFpitch();
+    IMU_Yaw = myGNSS.getESFyaw();
   }
 
-if (myGNSS.getEsfIns(5)) // Poll new ESF INS data
+  if (myGNSS.getEsfIns(5)) // Poll new ESF INS data
   {
-    IMU_xAccel = myGNSS.packetUBXESFINS->data.xAccel;  
-    IMU_yAccel = myGNSS.packetUBXESFINS->data.yAccel;  
+    IMU_xAccel = myGNSS.packetUBXESFINS->data.xAccel;
+    IMU_yAccel = myGNSS.packetUBXESFINS->data.yAccel;
     IMU_zAccel = myGNSS.packetUBXESFINS->data.zAccel;
   }
+
+  adxl.readAccel(&ADXL_x, &ADXL_y, &ADXL_z);
 
   if (systemErrorState == 1)
   {
@@ -199,10 +209,11 @@ if (myGNSS.getEsfIns(5)) // Poll new ESF INS data
   {
     counter += 1;
 
-    if(counter > 40) {
-    Serial.println("HEADtime,GPS_groundSpeed,GPS_lat,GPS_long,GPS_heading,GPS_Seconds,GPS_Minutes,GPS_Hours,GPS_Day,GPS_Month,LC_Force,IMU_roll,IMU_pitch,IMU_yaw,IMU_xAccel,IMU_yAccel,IMU_zAccel");
-    counter = 0;  
-  }
+    if (counter > 40)
+    {
+      Serial.println("HEADtime,GPS_groundSpeed,GPS_lat,GPS_long,GPS_heading,GPS_Seconds,GPS_Minutes,GPS_Hours,GPS_Day,GPS_Month,LC_Force,IMU_roll,IMU_pitch,IMU_yaw,IMU_xAccel,IMU_yAccel,IMU_zAccel,ADXL_x");
+      counter = 0;
+    }
     Serial.print("DATA");
     Serial.print(time);
     Serial.print(",");
@@ -236,6 +247,8 @@ if (myGNSS.getEsfIns(5)) // Poll new ESF INS data
     Serial.print(",");
     Serial.print(IMU_yAccel);
     Serial.print(",");
-    Serial.println(IMU_zAccel);
+    Serial.print(IMU_zAccel);
+    Serial.print(",");
+    Serial.println(ADXL_x);
   }
 }

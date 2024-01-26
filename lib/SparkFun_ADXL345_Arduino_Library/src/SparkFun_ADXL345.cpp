@@ -52,9 +52,11 @@ ADXL345::ADXL345(int CS) {
 	digitalWrite(_CS, HIGH);
 }
 
-void ADXL345::powerOn() {
+TwoWire wirePort = TwoWire(1); //GPS I2C bus
+
+void ADXL345::powerOn(int ADXL_SDA, int ADXL_SCL) {
 	if(I2C) {
-		Wire.begin();				// If in I2C Mode Only
+		wirePort.begin(ADXL_SDA, ADXL_SCL, 400000);				// If in I2C Mode Only
 	}
 	//ADXL345 TURN ON
 	writeTo(ADXL345_POWER_CTL, 0);	// Wakeup
@@ -112,27 +114,27 @@ void ADXL345::readFrom(byte address, int num, byte _buff[]) {
 /*************************** WRITE TO I2C ***************************/
 /*      Start; Send Register Address; Send Value To Write; End      */
 void ADXL345::writeToI2C(byte _address, byte _val) {
-	Wire.beginTransmission(ADXL345_DEVICE);
-	Wire.write(_address);
-	Wire.write(_val);
-	Wire.endTransmission();
+	wirePort.beginTransmission(ADXL345_DEVICE);
+	wirePort.write(_address);
+	wirePort.write(_val);
+	wirePort.endTransmission();
 }
 
 /*************************** READ FROM I2C **************************/
 /*                Start; Send Address To Read; End                  */
 void ADXL345::readFromI2C(byte address, int num, byte _buff[]) {
-	Wire.beginTransmission(ADXL345_DEVICE);
-	Wire.write(address);
-	Wire.endTransmission();
+	wirePort.beginTransmission(ADXL345_DEVICE);
+	wirePort.write(address);
+	wirePort.endTransmission();
 
 //	Wire.beginTransmission(ADXL345_DEVICE);
 // Wire.reqeustFrom contains the beginTransmission and endTransmission in it. 
-	Wire.requestFrom(ADXL345_DEVICE, num);  // Request 6 Bytes
+	wirePort.requestFrom(ADXL345_DEVICE, num);  // Request 6 Bytes
 
 	int i = 0;
-	while(Wire.available())
+	while(wirePort.available())
 	{
-		_buff[i] = Wire.read();				// Receive Byte
+		_buff[i] = wirePort.read();				// Receive Byte
 		i++;
 	}
 	if(i != num){

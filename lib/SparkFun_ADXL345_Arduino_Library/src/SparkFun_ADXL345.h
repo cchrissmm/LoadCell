@@ -17,6 +17,7 @@ Arduino Uno
 */
 
 #include "Arduino.h"
+#include<Wire.h>
 
 #ifndef ADXL345_h
 #define ADXL345_h
@@ -116,7 +117,7 @@ public:
 	
 	ADXL345();
 	ADXL345(int CS);
-	void powerOn();
+	void powerOn(int ADXL_SDA, int ADXL_SCL);
 	void readAccel(int* xyx);
 	void readAccel(int* x, int* y, int* z);
 	void get_Gxyz(double *xyz);
