@@ -243,15 +243,6 @@ def save_trace():
     except Exception as e:
         status_label.config(text=f"Error saving trace, probably no trace taken yet")
 
-#autoscrol function
-def toggle_autoscroll():
-    global autoscroll_enabled
-    autoscroll_enabled = not autoscroll_enabled
-    if autoscroll_enabled:
-        autoscroll_button.config(text="Autoscroll: ON")
-    else:
-        autoscroll_button.config(text="Autoscroll: OFF")
-
 def open_uniview(file_path):
     uniview_executable = r'c:\wtools\UNIVW64.exe'  # Replace with the actual path to UNIVW32.EXE
     command = f'"{uniview_executable}" "{file_path}"'
@@ -317,18 +308,6 @@ send_button.grid(row=3, column=4, padx=5, pady=5, sticky='W')
 send_button = Button(root, text="Save Cal", command=lambda: send_serial_data("<SAVEGYS>"))
 send_button.grid(row=4, column=4, padx=5, pady=5, sticky='W')
 
-# GYS X
-GYSX_label = Text(root, width=10, height=1,font=("default", 12))
-GYSX_label.grid(row=5, column=4, columnspan=4, padx=5, pady=5, sticky='W')
-
-# GYZ Y
-GYSY_label = Text(root, width=10, height=1,font=("default", 12))
-GYSY_label.grid(row=6, column=4, columnspan=4, padx=5, pady=5, sticky='W')
-
-# GYS Z
-GYSZ_label = Text(root, width=10, height=1,font=("default", 12))
-GYSZ_label.grid(row=7, column=4, columnspan=4, padx=5, pady=5, sticky='W')
-
 # Create an entry to specify the ring buffer size
 Label(root, text="Ring buffer size #samples").grid(row=1, column=0, padx=5, pady=5)
 ring_buffer_entry = Entry(root, textvariable=ring_buffer_size)
@@ -336,7 +315,7 @@ ring_buffer_entry.grid(row=1, column=1, padx=5, pady=5)
 Button(root, text="Update Ring Buffer Size", command=update_ring_buffer_size).grid(row=1, column=2, padx=5, pady=5)
 
 # Create the text box to display the debug data
-log_text_box = ScrolledText(root,font=("default", 12),height = 6, width = 80)
+log_text_box = ScrolledText(root,font=("default", 10),height = 6, width = 80)
 log_text_box.grid(row=3, column=0, columnspan=4, rowspan=3,padx=5, pady=5, sticky='W')
 
 # Create the label to display the status
@@ -384,6 +363,17 @@ live_data3_label.grid(row=10, column=4, sticky='W')
 live_data3_box = Text(root, width=10, height=1,font=("default", 15))
 live_data3_box.grid(row=11, column=4, columnspan=1, padx=5, pady=5, sticky='W')
 
+# GYS X
+GYSX_label = Text(root, width=10, height=1,font=("default", 12))
+GYSX_label.grid(row=13, column=0, columnspan=1, padx=5, pady=5, sticky='W')
+
+# GYZ Y
+GYSY_label = Text(root, width=10, height=1,font=("default", 12))
+GYSY_label.grid(row=13, column=1, columnspan=1, padx=5, pady=5, sticky='W')
+
+# GYS Z
+GYSZ_label = Text(root, width=10, height=1,font=("default", 12))
+GYSZ_label.grid(row=13, column=2, columnspan=1, padx=5, pady=5, sticky='W')
 
 # Start reading data from the serial port
 read_serial()

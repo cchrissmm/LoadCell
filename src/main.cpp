@@ -21,13 +21,13 @@ HX711 scale;
 SFE_UBLOX_GNSS myGNSS;
 ADXL345 adxl = ADXL345();
 
-float IMU_Roll = 999;
-float IMU_Pitch = 999;
-float IMU_Yaw = 999;
+float IMU_Roll = INT_MAX;
+float IMU_Pitch = INT_MAX;
+float IMU_Yaw = INT_MAX;
 
-int IMU_xAccel = 999999;
-int IMU_yAccel = 999999;
-int IMU_zAccel = 999999;
+int IMU_xAccel = INT_MAX;
+int IMU_yAccel = INT_MAX;
+int IMU_zAccel = INT_MAX;
 
 float LC_scaleValue = -34200; // set this default
 long LC_offsetValue = 0;
@@ -36,7 +36,19 @@ string message = "";
 int systemErrorState = 0; // 0 = no error, 1 = error
 int counter = 0;
 
-int ADXL_x, ADXL_y, ADXL_z;
+float ADXL_x, ADXL_y, ADXL_z;
+int AccelMinX, AccelMinY, AccelMinZ;
+int AccelMaxX, AccelMaxY, AccelMaxZ;
+
+float gainX = 1;
+float gainY = 1;
+float gainZ = 1;
+
+float offsetX = 0;
+float offsetY = 0;
+float offsetZ = 0;
+
+int rawX, rawY, rawZ; // init variables hold results
 
 TwoWire I2Cone = TwoWire(0); // GPS I2C bus
 
@@ -122,6 +134,13 @@ void setup()
 
   adxl.powerOn(ADXL_SDA, ADXL_SCL);
   adxl.setRangeSetting(ADXL_RANGE);
+  adxl.readAccel(&rawX, &rawY, &rawZ); // initialise the ranges to a real value
+  AccelMaxX = rawX;
+  AccelMinX = rawX;
+  AccelMaxY = rawY;
+  AccelMinY = rawY;
+  AccelMaxZ = rawZ;
+  AccelMinZ = rawZ;
 
   if (!systemErrorState)
     Serial.println("Setup completed with no errors............................................");
@@ -163,6 +182,69 @@ void loop()
       // reset the esp32
       ESP.restart();
     }
+
+    if (str.startsWith("<CALGYS>"))
+    {
+
+      adxl.readAccel(&rawX, &rawY, &rawZ);
+
+      if (rawX < AccelMinX)
+        AccelMinX = rawX;
+      if (rawX > AccelMaxX)
+        AccelMaxX = rawX;
+
+      if (rawY < AccelMinY)
+        AccelMinY = rawY;
+      if (rawY > AccelMaxY)
+        AccelMaxY = rawY;
+
+      if (rawZ < AccelMinZ)
+        AccelMinZ = rawZ;
+      if (rawZ> AccelMaxZ)
+        AccelMaxZ = rawZ;
+
+      Serial.print("Accel Minimums: ");
+      Serial.print(AccelMinX);
+      Serial.print("  ");
+      Serial.print(AccelMinY);
+      Serial.print("  ");
+      Serial.print(AccelMinZ);
+      Serial.println();
+
+      Serial.print("Accel Maximums: ");
+      Serial.print(AccelMaxX);
+      Serial.print("  ");
+      Serial.print(AccelMaxY);
+      Serial.print("  ");
+      Serial.print(AccelMaxZ);
+      Serial.println();
+    }
+
+    if (str.startsWith("<SAVEGYS>"))
+    {
+      // CorrectedValue = (((RawValue – RawLow) * ReferenceRange) / RawRange) + ReferenceLow
+      gainX = 0.5 * (AccelMaxX - AccelMinX);
+      gainY = 0.5 * (AccelMaxY - AccelMinY);
+      gainZ = 0.5 * (AccelMaxZ - AccelMinZ);
+
+      offsetX = 0.5 * (AccelMaxX + AccelMinX);
+      offsetY = 0.5 * (AccelMaxY + AccelMinY);
+      offsetZ = 0.5 * (AccelMaxZ + AccelMinZ);
+
+      Serial.print("Gain X: ");
+      Serial.print(gainX);
+      Serial.print(" Gain Y: ");
+      Serial.print(gainY);
+      Serial.print(" Gain Z: ");
+      Serial.println(gainZ);
+
+      Serial.print("Offset X: ");
+      Serial.print(offsetX);
+      Serial.print(" Offset Y: ");
+      Serial.print(offsetY);
+      Serial.print(" Offset Z: ");
+      Serial.println(offsetZ);
+    }
   }
 
   long time = millis();
@@ -197,12 +279,16 @@ void loop()
     IMU_zAccel = myGNSS.packetUBXESFINS->data.zAccel;
   }
 
-  adxl.readAccel(&ADXL_x, &ADXL_y, &ADXL_z);
+  adxl.readAccel(&rawX, &rawY, &rawZ);
+
+  ADXL_x = (rawX - offsetX) * 9.81 / gainX;
+  ADXL_y = (rawY - offsetY) * 9.81 / gainY;
+  ADXL_z = (rawZ - offsetZ) * 9.81 / gainZ;
 
   if (systemErrorState == 1)
   {
-    // Serial.println("ERROR system error");
-    // vTaskDelay(10000 / portTICK_PERIOD_MS);
+    Serial.println("ERROR system error");
+    vTaskDelay(10000 / portTICK_PERIOD_MS);
     return;
   }
   else
