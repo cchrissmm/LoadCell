@@ -14,7 +14,7 @@ from queue import Queue
 root = Tk()
 
 # Set the size and title of the window
-root.geometry("1200x700")
+root.geometry("1100x600")
 root.title("Relativity Engineering Serial Logger")
 
 # Create the serial connection, text box, and ring buffer variables
@@ -175,19 +175,22 @@ def read_serial():
                 # Update the live data2 box = load cell
                 live_data2_box.delete(1.0, END)
                 live_data2_box.insert(END, str(data_line[10]))  # Index 2 corresponds to the third column
-                #GPS Time
+                # Update the live data2 box = load cell
                 live_data3_box.delete(1.0, END)
-                gps_time = ':'.join([str(data_line[7]), str(data_line[6]), str(data_line[5])])
-                live_data3_box.insert(END, gps_time)  # Index 2 corresponds to the third column
+                live_data3_box.insert(END, str(data_line[14]))  # Index 2 corresponds to the third column
+                #GPS Time
+                GPSTime_box.delete(1.0, END)
+                gps_time = ':'.join(["GPS Time GMT "+ str(data_line[7]), str(data_line[6]), str(data_line[5])])
+                GPSTime_box.insert(END, gps_time)  # Index 2 corresponds to the third column
                 # GYS X
                 GYSX_label.delete(1.0, END)
-                GYSX_label.insert(END, str(data_line[17]))  # Index 2 corresponds to the third column
+                GYSX_label.insert(END, "AX: " + str(data_line[17]))  # Index 2 corresponds to the third column
                  # GYS Y
                 GYSY_label.delete(1.0, END)
-                GYSY_label.insert(END, str(data_line[18]))  # Index 2 corresponds to the third column
+                GYSY_label.insert(END, "AY: " + str(data_line[18]))  # Index 2 corresponds to the third column
                  # GYS Z
                 GYSZ_label.delete(1.0, END)
-                GYSZ_label.insert(END, str(data_line[19]))  # Index 2 corresponds to the third column
+                GYSZ_label.insert(END, "AZ: " + str(data_line[19]))  # Index 2 corresponds to the third column
                 
                 counter += 1
                 if counter >= 60:
@@ -345,23 +348,23 @@ root.bind('s', lambda event: save_trace())
 traceFile_entry = Entry(root, textvariable=traceFileName, width=15,font=("default", 14))
 traceFile_entry.grid(row=9, column=3, padx=5, pady=5)
 
-# LiveDataBox 1
+# Velocity
 live_data1_label = Label(root, text="Speed (m/s):", font=("default", 16))
 live_data1_label.grid(row=10, column=0, sticky='W')
-live_data1_box = Text(root, width=10, height=1,font=("default", 50))
+live_data1_box = Text(root, width=8, height=1,font=("default", 50))
 live_data1_box.grid(row=11, column=0, columnspan=2, padx=5, pady=5, sticky='W')
 
-# LiveDataBox 2
+# Pedal
 live_data2_label = Label(root, text="Pedal Force (N):", font=("default", 16))
 live_data2_label.grid(row=10, column=2, sticky='W')
-live_data2_box = Text(root, width=10, height=1,font=("default", 50))
+live_data2_box = Text(root, width=8, height=1,font=("default", 50))
 live_data2_box.grid(row=11, column=2, columnspan=2, padx=5, pady=5, sticky='W')
 
-# LiveDataBox 2
-live_data3_label = Label(root, text="GPS Time", font=("default", 15))
+# GPS AX
+live_data3_label = Label(root, text="GPS AX:", font=("default", 16))
 live_data3_label.grid(row=10, column=4, sticky='W')
-live_data3_box = Text(root, width=10, height=1,font=("default", 15))
-live_data3_box.grid(row=11, column=4, columnspan=1, padx=5, pady=5, sticky='W')
+live_data3_box = Text(root, width=6, height=1,font=("default", 50))
+live_data3_box.grid(row=11, column=4, columnspan=2, padx=5, pady=5, sticky='W')
 
 # GYS X
 GYSX_label = Text(root, width=10, height=1,font=("default", 12))
@@ -375,6 +378,9 @@ GYSY_label.grid(row=13, column=1, columnspan=1, padx=5, pady=5, sticky='W')
 GYSZ_label = Text(root, width=10, height=1,font=("default", 12))
 GYSZ_label.grid(row=13, column=2, columnspan=1, padx=5, pady=5, sticky='W')
 
+# Time
+GPSTime_box = Text(root, width=25, height=1,font=("default", 12))
+GPSTime_box.grid(row=13, column=3, columnspan=2, padx=5, pady=5, sticky='W')
 # Start reading data from the serial port
 read_serial()
 
