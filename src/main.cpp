@@ -105,11 +105,11 @@ void setup()
 
   if (myGNSS.setNavigationFrequency(GPS_NAVFREQ))
   {
-    Serial.println(F("Set Nav Frequency Successful"));
+    Serial.println("Set Nav Frequency Successful");
   }
   else
   {
-    Serial.println(F("ERROR Set Nav Frequency Failed"));
+    Serial.println("ERROR Set Nav Frequency Failed");
     systemErrorState = 1;
   }
 
@@ -118,16 +118,16 @@ void setup()
   if (myGNSS.getEsfInfo())
   {
 
-    Serial.print(F("Fusion Mode: "));
+    Serial.print("Fusion Mode: ");
     Serial.println(myGNSS.packetUBXESFSTATUS->data.fusionMode);
 
     if (myGNSS.packetUBXESFSTATUS->data.fusionMode == 1)
     {
-      Serial.println(F("Fusion Mode is Initialized!"));
+      Serial.println("Fusion Mode is Initialized!");
     }
     else
     {
-      Serial.println(F("ERROR Fusion Mode is either disabled or not initialized!"));
+      Serial.println("ERROR Fusion Mode is either disabled or not initialized!");
       systemErrorState = 1;
     }
   }
@@ -142,10 +142,41 @@ void setup()
   AccelMaxZ = rawZ;
   AccelMinZ = rawZ;
 
+  if(EEPROM.get(8, gainX) && EEPROM.get(12, gainY) && EEPROM.get(16, gainZ))
+  {
+    Serial.print("ADXL Gain values loaded from EEPROM: ");
+    Serial.print(gainX);
+    Serial.print(" ");
+    Serial.print(gainY);
+    Serial.print(" ");
+    Serial.println(gainZ);
+  }
+  else
+  {
+    Serial.println("ERROR: ADXL Gain values not found in EEPROM");
+    systemErrorState = 1;
+  }
+
+
+  if(EEPROM.get(20, offsetX) && EEPROM.get(24, offsetY) && EEPROM.get(28, offsetZ))
+  {
+    Serial.print("ADXL Offset values loaded from EEPROM: ");
+    Serial.print(offsetX);
+    Serial.print(" ");
+    Serial.print(offsetY);
+    Serial.print(" ");
+    Serial.println(offsetZ);
+  }
+  else
+  {
+    Serial.println("ERROR: ADXL Offset values not found in EEPROM");
+    systemErrorState = 1;
+  }
+
   if (!systemErrorState)
     Serial.println("Setup completed with no errors............................................");
   else
-    Serial.println("Setup completed with errors............................................");
+    Serial.println("OKOKOK Setup completed with errors............................................");
 }
 
 void loop()
@@ -224,12 +255,27 @@ void loop()
     {
       // CorrectedValue = (((RawValue – RawLow) * ReferenceRange) / RawRange) + ReferenceLow
       gainX = 0.5 * (AccelMaxX - AccelMinX);
+      EEPROM.put(8, gainX);
       gainY = 0.5 * (AccelMaxY - AccelMinY);
+      EEPROM.put(12, gainY);
       gainZ = 0.5 * (AccelMaxZ - AccelMinZ);
+      EEPROM.put(16, gainZ);
 
       offsetX = 0.5 * (AccelMaxX + AccelMinX);
+      EEPROM.put(20, offsetX);
       offsetY = 0.5 * (AccelMaxY + AccelMinY);
+      EEPROM.put(24, offsetY);
       offsetZ = 0.5 * (AccelMaxZ + AccelMinZ);
+      EEPROM.put(28, offsetZ);
+
+      if(EEPROM.commit())
+      {
+        Serial.println("EEPROM ADXL write successful");
+      }
+      else
+      {
+        Serial.println("ERROR EEPROM ADXL write failed");
+      }
 
       Serial.print("Gain X: ");
       Serial.print(gainX);
@@ -287,8 +333,8 @@ void loop()
 
   if (systemErrorState == 1)
   {
-    Serial.println("ERROR system error");
-    vTaskDelay(10000 / portTICK_PERIOD_MS);
+    // Serial.println("ERROR system error");
+    // vTaskDelay(10000 / portTICK_PERIOD_MS);
     return;
   }
   else
