@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter.scrolledtext import ScrolledText
+from tkinter import simpledialog
 import serial.tools.list_ports
 import serial
 from collections import deque
@@ -15,7 +16,7 @@ root = Tk()
 
 # Set the size and title of the window
 root.geometry("1100x600")
-root.title("Relativity Engineering Serial Logger")
+root.title("Relativity Engineering Vehicle Data Logger")
 
 # Create the serial connection, text box, and ring buffer variables
 ser = None
@@ -38,6 +39,9 @@ connection_enabled = False
 
 # Queue for thread communication
 status_update_queue = Queue()
+
+# Initialize traceFileName with a default filename
+traceFileName = StringVar(value="trace")
 
 # Function to update GUI from the queue
 def update_gui_from_queue():
@@ -219,7 +223,7 @@ def read_serial():
 
 #new save as filename function
 def save_trace():
-    filename = traceFile_entry.get()
+    filename = traceFileName.get()
     if not filename:
         return
 
@@ -273,6 +277,13 @@ def toggle_connection():
 def send_serial_data(data):
     if ser is not None and ser.isOpen():
         ser.write(data.encode())  # Encode the string to bytes
+
+# Function to open the save file dialog
+def set_file():
+    filename = simpledialog.askstring("Set FileName", "Enter the filename:")
+    if filename is not None:  # If the user didn't cancel the dialog
+        traceFileName.set(filename)
+        filename_label.config(text=filename)
 
 # Initialize the periodic GUI update
 update_gui_from_queue()
@@ -344,9 +355,13 @@ root.bind('u', lambda event: open_uniview(full_path))
 Button(root, text="Save Trace(s)", command=save_trace, font=("default", 14)).grid(row=9, column=2, padx=5, pady=5)
 root.bind('s', lambda event: save_trace())
 
-# Create an entry to specify the save filename
-traceFile_entry = Entry(root, textvariable=traceFileName, width=15,font=("default", 14))
-traceFile_entry.grid(row=9, column=3, padx=5, pady=5)
+# Create a button to open the set file dialog
+setFileName_button = Button(root, text="Set FileName", command=set_file, font=("default", 14))
+setFileName_button.grid(row=9, column=3, padx=5, pady=5)
+
+# Create a label to display the filename
+filename_label = Label(root, text=traceFileName.get(), font=("default", 14))
+filename_label.grid(row=9, column=4, padx=5, pady=5)
 
 # Velocity
 live_data1_label = Label(root, text="Speed (m/s):", font=("default", 16))

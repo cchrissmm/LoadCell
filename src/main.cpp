@@ -117,19 +117,20 @@ void setup()
 
   if (myGNSS.getEsfInfo())
   {
-
-    Serial.print("Fusion Mode: ");
-    Serial.println(myGNSS.packetUBXESFSTATUS->data.fusionMode);
-
-    if (myGNSS.packetUBXESFSTATUS->data.fusionMode == 1)
-    {
-      Serial.println("Fusion Mode is Initialized!");
-    }
-    else
-    {
-      Serial.println("ERROR Fusion Mode is either disabled or not initialized!");
-      systemErrorState = 1;
-    }
+    Serial.print(F("Fusion Mode: "));
+    Serial.print(myGNSS.packetUBXESFSTATUS->data.fusionMode);
+    if (myGNSS.packetUBXESFSTATUS->data.fusionMode == 0)
+      Serial.println(F("  Sensor is initializing..."));
+    else if (myGNSS.packetUBXESFSTATUS->data.fusionMode == 1)
+      Serial.println(F("  Sensor is calibrated!"));
+    else if (myGNSS.packetUBXESFSTATUS->data.fusionMode == 2)
+      Serial.println(F("  Sensor fusion is suspended!"));
+    else if (myGNSS.packetUBXESFSTATUS->data.fusionMode == 3)
+      Serial.println(F("  Sensor fusion is disabled!"));
+  }
+  else
+  {
+    Serial.println("ERROR fusion mode not set up");
   }
 
   adxl.powerOn(ADXL_SDA, ADXL_SCL);
@@ -142,7 +143,7 @@ void setup()
   AccelMaxZ = rawZ;
   AccelMinZ = rawZ;
 
-  if(EEPROM.get(8, gainX) && EEPROM.get(12, gainY) && EEPROM.get(16, gainZ))
+  if (EEPROM.get(8, gainX) && EEPROM.get(12, gainY) && EEPROM.get(16, gainZ))
   {
     Serial.print("ADXL Gain values loaded from EEPROM: ");
     Serial.print(gainX);
@@ -157,8 +158,7 @@ void setup()
     systemErrorState = 1;
   }
 
-
-  if(EEPROM.get(20, offsetX) && EEPROM.get(24, offsetY) && EEPROM.get(28, offsetZ))
+  if (EEPROM.get(20, offsetX) && EEPROM.get(24, offsetY) && EEPROM.get(28, offsetZ))
   {
     Serial.print("ADXL Offset values loaded from EEPROM: ");
     Serial.print(offsetX);
@@ -231,7 +231,7 @@ void loop()
 
       if (rawZ < AccelMinZ)
         AccelMinZ = rawZ;
-      if (rawZ> AccelMaxZ)
+      if (rawZ > AccelMaxZ)
         AccelMaxZ = rawZ;
 
       Serial.print("Accel Minimums: ");
@@ -268,7 +268,7 @@ void loop()
       offsetZ = 0.5 * (AccelMaxZ + AccelMinZ);
       EEPROM.put(28, offsetZ);
 
-      if(EEPROM.commit())
+      if (EEPROM.commit())
       {
         Serial.println("EEPROM ADXL write successful");
       }
@@ -297,7 +297,7 @@ void loop()
   long GPS_lat = myGNSS.getLatitude();
   long GPS_long = myGNSS.getLongitude();
   long GPS_groundSpeed_mms = myGNSS.getGroundSpeed();
-  float GPS_groundSpeed = GPS_groundSpeed_mms * 0.0001;
+  float GPS_groundSpeed = GPS_groundSpeed_mms * 0.001 * 3.6;
   long GPS_heading_105 = myGNSS.getHeading();
   float GPS_heading = GPS_heading_105 * 0.000001; // degrees
   int GPS_Seconds = myGNSS.getSecond();

@@ -6,7 +6,7 @@ SET PYTHON_SCRIPT=logger.py
 REM Building the executable
 REM pyinstaller --onefile --windowed %PYTHON_SCRIPT%
 REM pyinstaller --onefile %PYTHON_SCRIPT%
-pyinstaller %PYTHON_SCRIPT%
+pyinstaller --noconfirm %PYTHON_SCRIPT%
 
 echo Build and copy process completed.
 pause
