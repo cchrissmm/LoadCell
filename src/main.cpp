@@ -19,7 +19,8 @@ using std::to_string; // this eliminates the need to write std::to_string, you c
 
 HX711 scale;
 SFE_UBLOX_GNSS myGNSS;
-ADXL345 adxl = ADXL345();
+ADXL345 adxl_1 = ADXL345(0x53);
+ADXL345 adxl_2 = ADXL345(0x1D);
 
 float IMU_Roll = INT_MAX;
 float IMU_Pitch = INT_MAX;
@@ -133,9 +134,9 @@ void setup()
     Serial.println("ERROR fusion mode not set up");
   }
 
-  adxl.powerOn(ADXL_SDA, ADXL_SCL);
-  adxl.setRangeSetting(ADXL_RANGE);
-  adxl.readAccel(&rawX, &rawY, &rawZ); // initialise the ranges to a real value
+  adxl_1.powerOn(ADXL_SDA, ADXL_SCL);
+  adxl_1.setRangeSetting(ADXL_RANGE);
+  adxl_1.readAccel(&rawX, &rawY, &rawZ); // initialise the ranges to a real value
   AccelMaxX = rawX;
   AccelMinX = rawX;
   AccelMaxY = rawY;
@@ -217,7 +218,7 @@ void loop()
     if (str.startsWith("<CALGYS>"))
     {
 
-      adxl.readAccel(&rawX, &rawY, &rawZ);
+      adxl_1.readAccel(&rawX, &rawY, &rawZ);
 
       if (rawX < AccelMinX)
         AccelMinX = rawX;
@@ -325,7 +326,7 @@ void loop()
     IMU_zAccel = myGNSS.packetUBXESFINS->data.zAccel;
   }
 
-  adxl.readAccel(&rawX, &rawY, &rawZ);
+  adxl_1.readAccel(&rawX, &rawY, &rawZ);
 
   ADXL_x = (rawX - offsetX) * 9.81 / gainX;
   ADXL_y = (rawY - offsetY) * 9.81 / gainY;

@@ -24,40 +24,41 @@ Arduino Uno
 #include <Wire.h>
 #include <SPI.h>
 
-#define ADXL345_DEVICE (0x53)    // Device Address for ADXL345
+//#define ADXL345_DEVICE (0x53)    // Device Address for ADXL345
 #define ADXL345_TO_READ (6)      // Number of Bytes Read - Two Bytes Per Axis
 
-ADXL345::ADXL345() {
+ADXL345::ADXL345(uint8_t deviceAddress) {
 	status = ADXL345_OK;
 	error_code = ADXL345_NO_ERROR;
 
 	gains[0] = 0.00376390;		// Original gain 0.00376390
 	gains[1] = 0.00376009;		// Original gain 0.00376009
 	gains[2] = 0.00349265;		// Original gain 0.00349265
+	_deviceAddress = deviceAddress;
 	I2C = true;
 }
 
-ADXL345::ADXL345(int CS) {
-	status = ADXL345_OK;
-	error_code = ADXL345_NO_ERROR;
+// ADXL345::ADXL345(int CS) {
+// 	status = ADXL345_OK;
+// 	error_code = ADXL345_NO_ERROR;
 
-	gains[0] = 0.00376390;
-	gains[1] = 0.00376009;
-	gains[2] = 0.00349265;
-	_CS = CS;
-	I2C = false;
-	SPI.begin();
-	SPI.setDataMode(SPI_MODE3);
-	pinMode(_CS, OUTPUT);
-	digitalWrite(_CS, HIGH);
-}
+// 	gains[0] = 0.00376390;
+// 	gains[1] = 0.00376009;
+// 	gains[2] = 0.00349265;
+// 	_CS = CS;
+// 	I2C = false;
+// 	SPI.begin();
+// 	SPI.setDataMode(SPI_MODE3);
+// 	pinMode(_CS, OUTPUT);
+// 	digitalWrite(_CS, HIGH);
+// }
 
 TwoWire wirePort = TwoWire(1); //GPS I2C bus
 
 void ADXL345::powerOn(int ADXL_SDA, int ADXL_SCL) {
-	if(I2C) {
+	//if(I2C) {
 		wirePort.begin(ADXL_SDA, ADXL_SCL, 400000);				// If in I2C Mode Only
-	}
+	//}
 	//ADXL345 TURN ON
 	writeTo(ADXL345_POWER_CTL, 0);	// Wakeup
 	writeTo(ADXL345_POWER_CTL, 16);	// Auto_Sleep
@@ -114,7 +115,7 @@ void ADXL345::readFrom(byte address, int num, byte _buff[]) {
 /*************************** WRITE TO I2C ***************************/
 /*      Start; Send Register Address; Send Value To Write; End      */
 void ADXL345::writeToI2C(byte _address, byte _val) {
-	wirePort.beginTransmission(ADXL345_DEVICE);
+	wirePort.beginTransmission(_deviceAddress);
 	wirePort.write(_address);
 	wirePort.write(_val);
 	wirePort.endTransmission();
@@ -123,13 +124,13 @@ void ADXL345::writeToI2C(byte _address, byte _val) {
 /*************************** READ FROM I2C **************************/
 /*                Start; Send Address To Read; End                  */
 void ADXL345::readFromI2C(byte address, int num, byte _buff[]) {
-	wirePort.beginTransmission(ADXL345_DEVICE);
+	wirePort.beginTransmission(_deviceAddress);
 	wirePort.write(address);
 	wirePort.endTransmission();
 
 //	Wire.beginTransmission(ADXL345_DEVICE);
 // Wire.reqeustFrom contains the beginTransmission and endTransmission in it. 
-	wirePort.requestFrom(ADXL345_DEVICE, num);  // Request 6 Bytes
+	wirePort.requestFrom(_deviceAddress, num);  // Request 6 Bytes
 
 	int i = 0;
 	while(wirePort.available())
