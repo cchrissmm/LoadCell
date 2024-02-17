@@ -355,7 +355,7 @@ void loop()
 
     if (counter > 40)
     {
-      Serial.println("HEADtime,GPS_groundSpeed,GPS_lat,GPS_long,GPS_heading,GPS_Seconds,GPS_Minutes,GPS_Hours,GPS_Day,GPS_Month,LC_Force,IMU_roll,IMU_pitch,IMU_yaw,IMU_xAccel,IMU_yAccel,IMU_zAccel,ADXL_x,ADXL_y,ADXL_z");
+      Serial.println("HEADtime,GPS_groundSpeed,GPS_lat,GPS_long,GPS_heading,GPS_Seconds,GPS_Minutes,GPS_Hours,GPS_Day,GPS_Month,LC_Force,IMU_roll,IMU_pitch,IMU_yaw,IMU_xAccel,IMU_yAccel,IMU_zAccel,ADXL1_x,ADXL1_y,ADXL1_z,ADXL2_x,ADXL2_y,ADXL2_z");
       counter = 0;
     }
     Serial.print("DATA");
