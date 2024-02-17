@@ -37,7 +37,8 @@ string message = "";
 int systemErrorState = 0; // 0 = no error, 1 = error
 int counter = 0;
 
-float ADXL_x, ADXL_y, ADXL_z;
+float ADXL1_x, ADXL1_y, ADXL1_z;
+float ADXL2_x, ADXL2_y, ADXL2_z;
 int AccelMinX, AccelMinY, AccelMinZ;
 int AccelMaxX, AccelMaxY, AccelMaxZ;
 
@@ -136,6 +137,10 @@ void setup()
 
   adxl_1.powerOn(ADXL_SDA, ADXL_SCL);
   adxl_1.setRangeSetting(ADXL_RANGE);
+  
+  adxl_2.powerOn(ADXL_SDA, ADXL_SCL);
+  adxl_2.setRangeSetting(ADXL_RANGE);
+
   adxl_1.readAccel(&rawX, &rawY, &rawZ); // initialise the ranges to a real value
   AccelMaxX = rawX;
   AccelMinX = rawX;
@@ -328,9 +333,15 @@ void loop()
 
   adxl_1.readAccel(&rawX, &rawY, &rawZ);
 
-  ADXL_x = (rawX - offsetX) * 9.81 / gainX;
-  ADXL_y = (rawY - offsetY) * 9.81 / gainY;
-  ADXL_z = (rawZ - offsetZ) * 9.81 / gainZ;
+  ADXL1_x = (rawX - offsetX) * 9.81 / gainX;
+  ADXL1_y = (rawY - offsetY) * 9.81 / gainY;
+  ADXL1_z = (rawZ - offsetZ) * 9.81 / gainZ;
+
+  adxl_2.readAccel(&rawX, &rawY, &rawZ);
+
+  ADXL2_x = (rawX - offsetX) * 9.81 / gainX;
+  ADXL2_y = (rawY - offsetY) * 9.81 / gainY;
+  ADXL2_z = (rawZ - offsetZ) * 9.81 / gainZ;
 
   if (systemErrorState == 1)
   {
@@ -382,10 +393,16 @@ void loop()
     Serial.print(",");
     Serial.print(IMU_zAccel);
     Serial.print(",");
-    Serial.print(ADXL_x);
+    Serial.print(ADXL1_x);
     Serial.print(",");
-    Serial.print(ADXL_y);
+    Serial.print(ADXL1_y);
     Serial.print(",");
-    Serial.println(ADXL_z);
+    Serial.print(ADXL1_z);
+    Serial.print(",");
+    Serial.print(ADXL2_x);
+    Serial.print(",");
+    Serial.print(ADXL2_y);
+    Serial.print(",");
+    Serial.println(ADXL2_z);
   }
 }
