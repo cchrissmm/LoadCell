@@ -4,9 +4,11 @@
 #include "HX711.h"
 #include <SparkFun_ADXL345.h>
 #include <Arduino.h>
+#include "ELMo.h"
 #include <string.h>
 using std::string;    // this eliminates the need to write std::string, you can just write string
 using std::to_string; // this eliminates the need to write std::to_string, you can just write to_string
+
 
 #define LC_DOUT 4  // LOADCELL
 #define LC_CLK 2   // LOADCELL
@@ -21,6 +23,7 @@ HX711 scale;
 SFE_UBLOX_GNSS myGNSS;
 ADXL345 adxl_1 = ADXL345(0x53);
 ADXL345 adxl_2 = ADXL345(0x1D);
+ELMo ELM;
 
 float IMU_Roll = INT_MAX;
 float IMU_Pitch = INT_MAX;
@@ -179,10 +182,18 @@ void setup()
     systemErrorState = 1;
   }
 
+  if(ELM.initialize()== false) {
+    Serial.println("ERROR: ELM327 not initialized");
+    systemErrorState = 1;
+  }
+  else {
+    Serial.println("ELM327 initialized");
+  }
+
   if (!systemErrorState)
     Serial.println("Setup completed with no errors............................................");
   else
-    Serial.println("OKOKOK Setup completed with errors............................................");
+    Serial.println("ERROR Setup completed with errors............................................");
 }
 
 void loop()
@@ -343,6 +354,8 @@ void loop()
   ADXL2_y = (rawY - offsetY) * 9.81 / gainY;
   ADXL2_z = (rawZ - offsetZ) * 9.81 / gainZ;
 
+  String ThrottlePos = ELM.send("01 11");
+ 
   if (systemErrorState == 1)
   {
     // Serial.println("ERROR system error");
@@ -355,7 +368,7 @@ void loop()
 
     if (counter > 40)
     {
-      Serial.println("HEADtime,GPS_groundSpeed,GPS_lat,GPS_long,GPS_heading,GPS_Seconds,GPS_Minutes,GPS_Hours,GPS_Day,GPS_Month,LC_Force,IMU_roll,IMU_pitch,IMU_yaw,IMU_xAccel,IMU_yAccel,IMU_zAccel,ADXL1_x,ADXL1_y,ADXL1_z,ADXL2_x,ADXL2_y,ADXL2_z");
+      Serial.println("HEADtime,GPS_groundSpeed,GPS_lat,GPS_long,GPS_heading,GPS_Seconds,GPS_Minutes,GPS_Hours,GPS_Day,GPS_Month,LC_Force,IMU_roll,IMU_pitch,IMU_yaw,IMU_xAccel,IMU_yAccel,IMU_zAccel,ADXL1_x,ADXL1_y,ADXL1_z,ADXL2_x,ADXL2_y,ADXL2_z,ThrottlePos");
       counter = 0;
     }
     Serial.print("DATA");
@@ -403,6 +416,8 @@ void loop()
     Serial.print(",");
     Serial.print(ADXL2_y);
     Serial.print(",");
-    Serial.println(ADXL2_z);
+    Serial.print(ADXL2_z);
+    Serial.print(",");
+    Serial.println(ThrottlePos);
   }
 }
