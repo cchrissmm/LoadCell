@@ -182,6 +182,8 @@ void setup()
     systemErrorState = 1;
   }
 
+  ELM.setDebug(true);
+  
   if(ELM.initialize()== false) {
     Serial.println("ERROR: ELM327 not initialized");
     systemErrorState = 1;
