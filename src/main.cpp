@@ -191,9 +191,10 @@ void setup()
     systemErrorState = 1;
   }
 
-  
-  ELM_PORT.begin("ArduHUD", true);
   SerialBT.setPin("1234");
+  ELM_PORT.begin("ArduHUD", true);
+  
+  Serial.print("Connecting to OBDII..................................");
 
   if (!ELM_PORT.connect("OBDII"))
   {
@@ -209,7 +210,7 @@ void setup()
       ;
   }
 
-  Serial.println("Connected to ELM327 OK");
+  Serial.println("Connected to OBD OK");
 
   if (!systemErrorState)
     Serial.println("Setup completed with no errors............................................");
@@ -375,7 +376,12 @@ void loop()
   ADXL2_y = (rawY - offsetY) * 9.81 / gainY;
   ADXL2_z = (rawZ - offsetZ) * 9.81 / gainZ;
 
-  throttlePos = myELM327.rpm();
+  float throttlePosTemp = myELM327.rpm();
+
+  if (myELM327.nb_rx_state == ELM_SUCCESS)
+  {
+    throttlePos = throttlePosTemp;
+  }
 
   if (systemErrorState == 1)
   {
