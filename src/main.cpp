@@ -18,8 +18,6 @@ BluetoothSerial SerialBT;
 
 ELM327 myELM327;
 
-uint32_t rpm = 0;
-
 #define LC_DOUT 4  // LOADCELL
 #define LC_CLK 2   // LOADCELL
 #define GPS_SDA 22 // GPS
@@ -63,6 +61,8 @@ float offsetY = 0;
 float offsetZ = 0;
 
 int rawX, rawY, rawZ; // init variables hold results
+
+float throttlePos = 999;
 
 TwoWire I2Cone = TwoWire(0); // GPS I2C bus
 
@@ -191,8 +191,9 @@ void setup()
     systemErrorState = 1;
   }
 
-  SerialBT.setPin("1234");
+  
   ELM_PORT.begin("ArduHUD", true);
+  SerialBT.setPin("1234");
 
   if (!ELM_PORT.connect("OBDII"))
   {
@@ -201,12 +202,14 @@ void setup()
       ;
   }
 
-  if (!myELM327.begin(ELM_PORT, true, 2000))
+  if (!myELM327.begin(ELM_PORT, false, 2000))
   {
     Serial.println("Couldn't connect to OBD scanner - Phase 2");
     while (1)
       ;
   }
+
+  Serial.println("Connected to ELM327 OK");
 
   if (!systemErrorState)
     Serial.println("Setup completed with no errors............................................");
@@ -372,6 +375,8 @@ void loop()
   ADXL2_y = (rawY - offsetY) * 9.81 / gainY;
   ADXL2_z = (rawZ - offsetZ) * 9.81 / gainZ;
 
+  throttlePos = myELM327.rpm();
+
   if (systemErrorState == 1)
   {
     // Serial.println("ERROR system error");
@@ -432,8 +437,8 @@ void loop()
     Serial.print(",");
     Serial.print(ADXL2_y);
     Serial.print(",");
-    Serial.println(ADXL2_z);
-    //Serial.print(",");
-   // Serial.println(ThrottlePos);
+    Serial.print(ADXL2_z);
+    Serial.print(",");
+    Serial.println(throttlePos);
   }
 }
