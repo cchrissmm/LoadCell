@@ -9,6 +9,16 @@
 using std::string;    // this eliminates the need to write std::string, you can just write string
 using std::to_string; // this eliminates the need to write std::to_string, you can just write to_string
 
+#include "BluetoothSerial.h"
+#include "ELMduino.h"
+
+BluetoothSerial SerialBT;
+#define ELM_PORT SerialBT
+#define DEBUG_PORT Serial
+
+ELM327 myELM327;
+
+uint32_t rpm = 0;
 
 #define LC_DOUT 4  // LOADCELL
 #define LC_CLK 2   // LOADCELL
@@ -23,7 +33,6 @@ HX711 scale;
 SFE_UBLOX_GNSS myGNSS;
 ADXL345 adxl_1 = ADXL345(0x53);
 ADXL345 adxl_2 = ADXL345(0x1D);
-ELMo ELM;
 
 float IMU_Roll = INT_MAX;
 float IMU_Pitch = INT_MAX;
@@ -140,7 +149,7 @@ void setup()
 
   adxl_1.powerOn(ADXL_SDA, ADXL_SCL);
   adxl_1.setRangeSetting(ADXL_RANGE);
-  
+
   adxl_2.powerOn(ADXL_SDA, ADXL_SCL);
   adxl_2.setRangeSetting(ADXL_RANGE);
 
@@ -182,14 +191,21 @@ void setup()
     systemErrorState = 1;
   }
 
-  ELM.setDebug(true);
-  
-  if(ELM.initialize()== false) {
-    Serial.println("ERROR: ELM327 not initialized");
-    systemErrorState = 1;
+  SerialBT.setPin("1234");
+  ELM_PORT.begin("ArduHUD", true);
+
+  if (!ELM_PORT.connect("OBDII"))
+  {
+    DEBUG_PORT.println("Couldn't connect to OBD scanner - Phase 1");
+    while (1)
+      ;
   }
-  else {
-    Serial.println("ELM327 initialized");
+
+  if (!myELM327.begin(ELM_PORT, true, 2000))
+  {
+    Serial.println("Couldn't connect to OBD scanner - Phase 2");
+    while (1)
+      ;
   }
 
   if (!systemErrorState)
@@ -356,8 +372,6 @@ void loop()
   ADXL2_y = (rawY - offsetY) * 9.81 / gainY;
   ADXL2_z = (rawZ - offsetZ) * 9.81 / gainZ;
 
-  String ThrottlePos = ELM.send("01 11");
- 
   if (systemErrorState == 1)
   {
     // Serial.println("ERROR system error");
@@ -418,8 +432,8 @@ void loop()
     Serial.print(",");
     Serial.print(ADXL2_y);
     Serial.print(",");
-    Serial.print(ADXL2_z);
-    Serial.print(",");
-    Serial.println(ThrottlePos);
+    Serial.println(ADXL2_z);
+    //Serial.print(",");
+   // Serial.println(ThrottlePos);
   }
 }
