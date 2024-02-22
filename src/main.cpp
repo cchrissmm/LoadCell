@@ -5,9 +5,7 @@
 #include <SparkFun_ADXL345.h>
 #include <Arduino.h>
 #include "ELMo.h"
-#include <string.h>
-using std::string;    // this eliminates the need to write std::string, you can just write string
-using std::to_string; // this eliminates the need to write std::to_string, you can just write to_string
+#include <main.h>
 
 #include "BluetoothSerial.h"
 #include "ELMduino.h"
@@ -72,133 +70,30 @@ void setup()
   Serial.println("Relativity DAQ v1.0.0");
   Serial.println("Setup started............................................");
 
-  EEPROM.begin(512); // Initialize EEPROM with a size of 512 bytes
-
-  if (EEPROM.get(0, LC_scaleValue))
+  if(!setupLoadCell())
   {
-    Serial.print("LC Calibration factor loaded from EEPROM: ");
-    Serial.println(LC_scaleValue);
-    if (LC_scaleValue < 30000 || LC_scaleValue > 40000)
+    systemErrorState = 1;
+  }
+
+  if(!setupGPS())
+  {
+    if (!setupGYS())
     {
-      Serial.println("ERROR: LC Calibration factor out of range");
-      // systemErrorState = 1;
+      systemErrorState = 1;
     }
   }
-  else
-  {
-    Serial.print("ERROR: LC Calibration factor not found in EEPROM ");
-    Serial.println(LC_scaleValue);
+    if(!setupGYS()){
     systemErrorState = 1;
-  }
-
-  if (EEPROM.get(4, LC_offsetValue))
-  {
-    Serial.print("LC Tare value loaded from EEPROM: ");
-    Serial.println(LC_offsetValue);
-  }
-  else
-  {
-    Serial.print("ERROR: LC Tare value not found in EEPROM");
+    }
+    
+    if(!setupOBD()){
     systemErrorState = 1;
-  }
+    }
 
-  scale.begin(LC_DOUT, LC_CLK);
-  scale.set_offset(LC_offsetValue);
-  scale.set_scale(LC_scaleValue);
-  scale.set_raw_mode();
-
-  I2Cone.begin(GPS_SDA, GPS_SCL, 400000); // SDA, SCL
-
-  if (myGNSS.begin(I2Cone) == false)
-  {
-    Serial.println(F("ERROR u-blox GNSS module not detected at I2C address. Please check wiring."));
-    systemErrorState = 1;
-  }
-
-  myGNSS.setI2COutput(COM_TYPE_UBX); // Set the I2C port to output UBX only (turn off NMEA noise)
-
-  if (myGNSS.setNavigationFrequency(GPS_NAVFREQ))
-  {
-    Serial.println("Set Nav Frequency Successful");
-  }
-  else
-  {
-    Serial.println("ERROR Set Nav Frequency Failed");
-    systemErrorState = 1;
-  }
-
-  adxl_1.powerOn(ADXL_SDA, ADXL_SCL);
-  adxl_1.setRangeSetting(ADXL_RANGE);
-
-  adxl_2.powerOn(ADXL_SDA, ADXL_SCL);
-  adxl_2.setRangeSetting(ADXL_RANGE);
-
-  adxl_1.readAccel(&rawX, &rawY, &rawZ); // initialise the ranges to a real value
-  AccelMaxX = rawX;
-  AccelMinX = rawX;
-  AccelMaxY = rawY;
-  AccelMinY = rawY;
-  AccelMaxZ = rawZ;
-  AccelMinZ = rawZ;
-
-  if (EEPROM.get(8, gainX) && EEPROM.get(12, gainY) && EEPROM.get(16, gainZ))
-  {
-    Serial.print("ADXL Gain values loaded from EEPROM: ");
-    Serial.print(gainX);
-    Serial.print(" ");
-    Serial.print(gainY);
-    Serial.print(" ");
-    Serial.println(gainZ);
-  }
-  else
-  {
-    Serial.println("ERROR: ADXL Gain values not found in EEPROM");
-    systemErrorState = 1;
-  }
-
-  if (EEPROM.get(20, offsetX) && EEPROM.get(24, offsetY) && EEPROM.get(28, offsetZ))
-  {
-    Serial.print("ADXL Offset values loaded from EEPROM: ");
-    Serial.print(offsetX);
-    Serial.print(" ");
-    Serial.print(offsetY);
-    Serial.print(" ");
-    Serial.println(offsetZ);
-  }
-  else
-  {
-    Serial.println("ERROR: ADXL Offset values not found in EEPROM");
-    systemErrorState = 1;
-  }
-  
-  SerialBT.begin("RelativityDAQ", true);
-  
-  //establish BT connection
-  Serial.println("Trying to connect to OBD via BT...");
-  if (!SerialBT.connect("OBDII"))
-  {
-    Serial.println("ERROR: Couldn't connect to Bluetooth");
-    systemErrorState = 1;
-  }
-  else
-  {
-    Serial.println("Connected to BT OK");
-  }
-//Connect to ELM chip
-Serial.println("Trying to connect to ELM327...");
-  if (!myELM327.begin(SerialBT, false, 100))
-  {
-    Serial.println("ERROR: Couldn't connect to ELM327");
-    systemErrorState = 1;
-  }
-  else {
-    Serial.println("Connected to ELM327 OK");
-  }
-
-  if (!systemErrorState)
-    Serial.println("Setup completed with no errors............................................");
-  else
-    Serial.println("ERROR Setup completed with errors............................................");
+    if (!systemErrorState)
+      Serial.println("Setup completed with no errors............................................");
+    else
+      Serial.println("ERROR Setup completed with errors............................................");
 }
 
 void loop()
@@ -404,4 +299,148 @@ void loop()
     Serial.print(",");
     Serial.println(throttlePos);
   }
+}
+
+bool setupLoadCell()
+{
+  EEPROM.begin(512); // Initialize EEPROM with a size of 512 bytes
+
+  if (EEPROM.get(0, LC_scaleValue))
+  {
+    Serial.print("LC Calibration factor loaded from EEPROM: ");
+    Serial.println(LC_scaleValue);
+    if (LC_scaleValue < 30000 || LC_scaleValue > 40000)
+    {
+      Serial.println("ERROR: LC Calibration factor out of range");
+      // return false;
+    }
+  }
+  else
+  {
+    Serial.print("ERROR: LC Calibration factor not found in EEPROM ");
+    Serial.println(LC_scaleValue);
+    return false;
+  }
+
+  if (EEPROM.get(4, LC_offsetValue))
+  {
+    Serial.print("LC Tare value loaded from EEPROM: ");
+    Serial.println(LC_offsetValue);
+  }
+  else
+  {
+    Serial.print("ERROR: LC Tare value not found in EEPROM");
+    return false;
+  }
+
+  scale.begin(LC_DOUT, LC_CLK);
+  scale.set_offset(LC_offsetValue);
+  scale.set_scale(LC_scaleValue);
+  scale.set_raw_mode();
+
+  return true;
+}
+
+bool setupGPS()
+{
+  I2Cone.begin(GPS_SDA, GPS_SCL, 400000); // SDA, SCL
+
+  if (myGNSS.begin(I2Cone) == false)
+  {
+    Serial.println(F("ERROR u-blox GNSS module not detected at I2C address. Please check wiring."));
+    return false;
+  }
+
+  myGNSS.setI2COutput(COM_TYPE_UBX); // Set the I2C port to output UBX only (turn off NMEA noise)
+
+  if (myGNSS.setNavigationFrequency(GPS_NAVFREQ))
+  {
+    Serial.println("Set Nav Frequency Successful");
+  }
+  else
+  {
+    Serial.println("ERROR Set Nav Frequency Failed");
+    return false;
+  }
+
+  return true;
+}
+
+bool setupGYS()
+{
+  adxl_1.powerOn(ADXL_SDA, ADXL_SCL);
+  adxl_1.setRangeSetting(ADXL_RANGE);
+
+  adxl_2.powerOn(ADXL_SDA, ADXL_SCL);
+  adxl_2.setRangeSetting(ADXL_RANGE);
+
+  adxl_1.readAccel(&rawX, &rawY, &rawZ); // initialise the ranges to a real value
+  AccelMaxX = rawX;
+  AccelMinX = rawX;
+  AccelMaxY = rawY;
+  AccelMinY = rawY;
+  AccelMaxZ = rawZ;
+  AccelMinZ = rawZ;
+
+  if (EEPROM.get(8, gainX) && EEPROM.get(12, gainY) && EEPROM.get(16, gainZ))
+  {
+    Serial.print("ADXL Gain values loaded from EEPROM: ");
+    Serial.print(gainX);
+    Serial.print(" ");
+    Serial.print(gainY);
+    Serial.print(" ");
+    Serial.println(gainZ);
+  }
+  else
+  {
+    Serial.println("ERROR: ADXL Gain values not found in EEPROM");
+    return false;
+  }
+
+  if (EEPROM.get(20, offsetX) && EEPROM.get(24, offsetY) && EEPROM.get(28, offsetZ))
+  {
+    Serial.print("ADXL Offset values loaded from EEPROM: ");
+    Serial.print(offsetX);
+    Serial.print(" ");
+    Serial.print(offsetY);
+    Serial.print(" ");
+    Serial.println(offsetZ);
+  }
+  else
+  {
+    Serial.println("ERROR: ADXL Offset values not found in EEPROM");
+    return false;
+  }
+
+  return true;
+}
+
+bool setupOBD()
+{
+  // establish BT connection
+  SerialBT.begin("RelativityDAQ", true);
+
+  Serial.println("Trying to connect to OBD via BT...");
+  if (!SerialBT.connect("OBDII"))
+  {
+    Serial.println("ERROR: Couldn't connect to Bluetooth");
+    return false;
+  }
+  else
+  {
+    Serial.println("Connected to BT OK");
+  }
+  // Connect to ELM chip
+  Serial.println("Trying to connect to ELM327...");
+  if (!myELM327.begin(SerialBT, false, 100))
+  {
+    Serial.println("ERROR: Couldn't connect to ELM327");
+    return false;
+  }
+  else
+  {
+    Serial.println("Connected to ELM327 OK");
+  }
+
+  return true;
 }
