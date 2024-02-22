@@ -127,26 +127,6 @@ void setup()
     systemErrorState = 1;
   }
 
-  myGNSS.setESFAutoAlignment(true); // Enable Automatic IMU-mount Alignment
-
-  if (myGNSS.getEsfInfo())
-  {
-    Serial.print(F("Fusion Mode: "));
-    Serial.print(myGNSS.packetUBXESFSTATUS->data.fusionMode);
-    if (myGNSS.packetUBXESFSTATUS->data.fusionMode == 0)
-      Serial.println(F("  Sensor is initializing..."));
-    else if (myGNSS.packetUBXESFSTATUS->data.fusionMode == 1)
-      Serial.println(F("  Sensor is calibrated!"));
-    else if (myGNSS.packetUBXESFSTATUS->data.fusionMode == 2)
-      Serial.println(F("  Sensor fusion is suspended!"));
-    else if (myGNSS.packetUBXESFSTATUS->data.fusionMode == 3)
-      Serial.println(F("  Sensor fusion is disabled!"));
-  }
-  else
-  {
-    Serial.println("ERROR fusion mode not set up");
-  }
-
   adxl_1.powerOn(ADXL_SDA, ADXL_SCL);
   adxl_1.setRangeSetting(ADXL_RANGE);
 
@@ -191,23 +171,20 @@ void setup()
     systemErrorState = 1;
   }
 
-  SerialBT.setPin("1234");
-  ELM_PORT.begin("ArduHUD", true);
+ Serial.print("Connecting to OBDII..................................");
   
-  Serial.print("Connecting to OBDII..................................");
+  SerialBT.begin("RelativityDAQ", true);
 
-  if (!ELM_PORT.connect("OBDII"))
+  if (!SerialBT.connect("OBDII"))
   {
-    DEBUG_PORT.println("Couldn't connect to OBD scanner - Phase 1");
-    while (1)
-      ;
+    Serial.println("ERROR: Couldn't connect to Bluetooth");
+    systemErrorState = 1;
   }
 
-  if (!myELM327.begin(ELM_PORT, false, 2000))
+  if (!myELM327.begin(SerialBT, false, 100))
   {
-    Serial.println("Couldn't connect to OBD scanner - Phase 2");
-    while (1)
-      ;
+    Serial.println("ERROR: Couldn't connect to OBD scanner");
+    systemErrorState = 1;
   }
 
   Serial.println("Connected to OBD OK");
@@ -350,20 +327,6 @@ void loop()
     LC_Force = scale.get_units();
   }
 
-  if (myGNSS.getEsfAlignment(5)) // Poll new ESF ALG data
-  {
-    IMU_Roll = myGNSS.getESFroll();
-    IMU_Pitch = myGNSS.getESFpitch();
-    IMU_Yaw = myGNSS.getESFyaw();
-  }
-
-  if (myGNSS.getEsfIns(5)) // Poll new ESF INS data
-  {
-    IMU_xAccel = myGNSS.packetUBXESFINS->data.xAccel;
-    IMU_yAccel = myGNSS.packetUBXESFINS->data.yAccel;
-    IMU_zAccel = myGNSS.packetUBXESFINS->data.zAccel;
-  }
-
   adxl_1.readAccel(&rawX, &rawY, &rawZ);
 
   ADXL1_x = (rawX - offsetX) * 9.81 / gainX;
@@ -395,7 +358,7 @@ void loop()
 
     if (counter > 40)
     {
-      Serial.println("HEADtime,GPS_groundSpeed,GPS_lat,GPS_long,GPS_heading,GPS_Seconds,GPS_Minutes,GPS_Hours,GPS_Day,GPS_Month,LC_Force,IMU_roll,IMU_pitch,IMU_yaw,IMU_xAccel,IMU_yAccel,IMU_zAccel,ADXL1_x,ADXL1_y,ADXL1_z,ADXL2_x,ADXL2_y,ADXL2_z,ThrottlePos");
+      Serial.println("HEADtime,GPS_groundSpeed,GPS_lat,GPS_long,GPS_heading,GPS_Seconds,GPS_Minutes,GPS_Hours,GPS_Day,GPS_Month,LC_Force,ADXL1_x,ADXL1_y,ADXL1_z,ADXL2_x,ADXL2_y,ADXL2_z,ThrottlePos");
       counter = 0;
     }
     Serial.print("DATA");
@@ -420,18 +383,6 @@ void loop()
     Serial.print(GPS_Month);
     Serial.print(",");
     Serial.print(LC_Force);
-    Serial.print(",");
-    Serial.print(IMU_Roll);
-    Serial.print(",");
-    Serial.print(IMU_Pitch);
-    Serial.print(",");
-    Serial.print(IMU_Yaw);
-    Serial.print(",");
-    Serial.print(IMU_xAccel);
-    Serial.print(",");
-    Serial.print(IMU_yAccel);
-    Serial.print(",");
-    Serial.print(IMU_zAccel);
     Serial.print(",");
     Serial.print(ADXL1_x);
     Serial.print(",");
