@@ -170,24 +170,29 @@ void setup()
     Serial.println("ERROR: ADXL Offset values not found in EEPROM");
     systemErrorState = 1;
   }
-
- Serial.print("Connecting to OBDII..................................");
   
   SerialBT.begin("RelativityDAQ", true);
-
+  //establish BT connection
+  Serial.println("Trying to connect to OBD via BT...");
   if (!SerialBT.connect("OBDII"))
   {
     Serial.println("ERROR: Couldn't connect to Bluetooth");
     systemErrorState = 1;
   }
-
+  else
+  {
+    Serial.println("Connected to BT OK");
+  }
+//Connect to ELM chip
+Serial.println("Trying to connect to ELM327...");
   if (!myELM327.begin(SerialBT, false, 100))
   {
-    Serial.println("ERROR: Couldn't connect to OBD scanner");
+    Serial.println("ERROR: Couldn't connect to ELM327");
     systemErrorState = 1;
   }
-
-  Serial.println("Connected to OBD OK");
+  else {
+    Serial.println("Connected to ELM327 OK");
+  }
 
   if (!systemErrorState)
     Serial.println("Setup completed with no errors............................................");
