@@ -188,13 +188,13 @@ def read_serial():
                 GPSTime_box.insert(END, gps_time)  # Index 2 corresponds to the third column
                 # GYS X
                 GYSX_label.delete(1.0, END)
-                GYSX_label.insert(END, "AX: " + str(data_line[17]))  # Index 2 corresponds to the third column
+                GYSX_label.insert(END, "AX: " + str(data_line[11]))  # Index 2 corresponds to the third column
                  # GYS Y
                 GYSY_label.delete(1.0, END)
-                GYSY_label.insert(END, "AY: " + str(data_line[18]))  # Index 2 corresponds to the third column
+                GYSY_label.insert(END, "AY: " + str(data_line[12]))  # Index 2 corresponds to the third column
                  # GYS Z
                 GYSZ_label.delete(1.0, END)
-                GYSZ_label.insert(END, "AZ: " + str(data_line[19]))  # Index 2 corresponds to the third column
+                GYSZ_label.insert(END, "AZ: " + str(data_line[13]))  # Index 2 corresponds to the third column
                 
                 counter += 1
                 if counter >= 60:
@@ -210,11 +210,13 @@ def read_serial():
             if not line.startswith("HEAD") and not line.startswith("DATA"):
                 if serial_log_file is not None and logging_enabled:
                     serial_log_file.write(line + "\n")  # Add a newline character
-                log_text_box.insert(END, line + "\n")  # Add the line with a newline to the log text box
-                log_text_box.see(END)
+                if line.strip():
+                    log_text_box.insert(END, line + "\n")  # Add the line with a newline to the log text box
+                    log_text_box.see(END)
 
         except Exception as e:
             print(f"Error reading serial data: {e}")
+            print(f"Line causing error: {line}")
 
         except:
             pass
@@ -329,8 +331,8 @@ ring_buffer_entry.grid(row=1, column=1, padx=5, pady=5)
 Button(root, text="Update Ring Buffer Size", command=update_ring_buffer_size).grid(row=1, column=2, padx=5, pady=5)
 
 # Create the text box to display the debug data
-log_text_box = ScrolledText(root,font=("default", 10),height = 6, width = 80)
-log_text_box.grid(row=3, column=0, columnspan=4, rowspan=3,padx=5, pady=5, sticky='W')
+log_text_box = ScrolledText(root,font=("default", 10),height = 10, width = 80)
+log_text_box.grid(row=3, column=0, columnspan=4, rowspan=4,padx=5, pady=5, sticky='W')
 
 # Create the label to display the status
 status_label = Label(root, text="Disconnected",  anchor='w', font=("default", 16))

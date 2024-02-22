@@ -172,6 +172,7 @@ void setup()
   }
   
   SerialBT.begin("RelativityDAQ", true);
+  
   //establish BT connection
   Serial.println("Trying to connect to OBD via BT...");
   if (!SerialBT.connect("OBDII"))
