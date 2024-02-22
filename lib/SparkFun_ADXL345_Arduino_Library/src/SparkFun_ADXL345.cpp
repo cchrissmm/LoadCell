@@ -27,6 +27,8 @@ Arduino Uno
 //#define ADXL345_DEVICE (0x53)    // Device Address for ADXL345
 #define ADXL345_TO_READ (6)      // Number of Bytes Read - Two Bytes Per Axis
 
+TwoWire wirePort = TwoWire(1); //GPS I2C bus
+
 ADXL345::ADXL345(uint8_t deviceAddress) {
 	status = ADXL345_OK;
 	error_code = ADXL345_NO_ERROR;
@@ -53,11 +55,15 @@ ADXL345::ADXL345(uint8_t deviceAddress) {
 // 	digitalWrite(_CS, HIGH);
 // }
 
-TwoWire wirePort = TwoWire(1); //GPS I2C bus
 
-void ADXL345::powerOn(int ADXL_SDA, int ADXL_SCL) {
+
+void initializeADXL345(int ADXL_SDA, int ADXL_SCL) {
+    wirePort.begin(ADXL_SDA, ADXL_SCL, 400000); // Initialize the I2C bus
+}
+
+void ADXL345::powerOn() {
 	//if(I2C) {
-		wirePort.begin(ADXL_SDA, ADXL_SCL, 400000);				// If in I2C Mode Only
+		//wirePort.begin(ADXL_SDA, ADXL_SCL, 400000);				// If in I2C Mode Only
 	//}
 	//ADXL345 TURN ON
 	writeTo(ADXL345_POWER_CTL, 0);	// Wakeup

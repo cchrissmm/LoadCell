@@ -107,6 +107,9 @@ Arduino Uno
 #define ADXL345_BAD_ARG		2		// Bad Argument
 
 
+
+void initializeADXL345(int ADXL_SDA, int ADXL_SCL);
+
 class ADXL345
 {
 public:
@@ -117,7 +120,7 @@ public:
 	
 	ADXL345(uint8_t deviceAddress);
 	//ADXL345(int CS);
-	void powerOn(int ADXL_SDA, int ADXL_SCL);
+	void powerOn();
 	void readAccel(int* xyx);
 	void readAccel(int* x, int* y, int* z);
 	void get_Gxyz(double *xyz);

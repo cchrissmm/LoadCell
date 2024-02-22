@@ -10,5 +10,6 @@ bool setupOBD();
 bool setupGPS();
 bool setupGYS();
 bool setupLoadCell();
+void calGYS();
 
 #endif /* MAIN_H_ */
