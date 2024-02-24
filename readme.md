@@ -14,3 +14,14 @@ The pinouts need to be
 |SCL|||WHT||
 |SDO|3V3|GND|Internal Bridge|To switch address|
 
+# ICM20948 Input
+This is connected by I2C, two sensors can be connected to the same bus.
+The pinouts need to be
+
+| Pin Sensor| Pin ESP32 | Wire Colour| Comment|
+| --------------- | --------------- | ------------ |------------|
+|Address |0x68|||
+| VIN | 3V3 |RED|
+| GND | GND |BLK|
+|DA|SDA|YEL|
+|CL|SCL|WHT|
