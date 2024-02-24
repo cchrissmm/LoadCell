@@ -25,10 +25,13 @@ ELM327 myELM327;
 #define ADXL_SCL 26   // ADXL345
 #define ADXL_RANGE 16 // 2,4,8,16
 
+TwoWire I2Cone = TwoWire(0); // GPS I2C bus
+TwoWire I2Ctwo = TwoWire(1); // GPS I2C bus
+
 HX711 scale;
 SFE_UBLOX_GNSS myGNSS;
-ADXL345 adxl_1 = ADXL345(0x53);
-ADXL345 adxl_2 = ADXL345(0x1D);
+ADXL345 adxl_1 = ADXL345(0x53, I2Ctwo);
+ADXL345 adxl_2 = ADXL345(0x1D, I2Ctwo);
 
 float IMU_Roll = INT_MAX;
 float IMU_Pitch = INT_MAX;
@@ -63,7 +66,7 @@ int rawX, rawY, rawZ; // init variables hold results
 float throttlePos = 999;
 float rpm = 999;
 
-TwoWire I2Cone = TwoWire(0); // GPS I2C bus
+
 
 void setup()
 {
@@ -266,7 +269,9 @@ bool setupGPS()
 
 bool setupGYS()
 {
-  initializeADXL345(ADXL_SDA, ADXL_SCL);
+  //initializeADXL345(ADXL_SDA, ADXL_SCL);
+
+  I2Ctwo.begin(ADXL_SDA, ADXL_SCL, 400000); // SDA, SCL
 
   adxl_1.powerOn();
   adxl_1.setRangeSetting(ADXL_RANGE);

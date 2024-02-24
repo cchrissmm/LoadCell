@@ -108,7 +108,7 @@ Arduino Uno
 
 
 
-void initializeADXL345(int ADXL_SDA, int ADXL_SCL);
+//void initializeADXL345(int ADXL_SDA, int ADXL_SCL);
 
 class ADXL345
 {
@@ -118,7 +118,7 @@ public:
 	byte error_code;				// Initial State
 	double gains[3];				// Counts to Gs
 	
-	ADXL345(uint8_t deviceAddress);
+	ADXL345(uint8_t deviceAddress,TwoWire &wirePort);
 	//ADXL345(int CS);
 	void powerOn();
 	void readAccel(int* xyx);
@@ -236,6 +236,7 @@ private:
 	bool I2C = true;
 	unsigned long SPIfreq = 5000000;
 	uint8_t _deviceAddress;
+	TwoWire *_wirePort;  // Pointer to a TwoWire object
 };
 void print_byte(byte val);
 #endif

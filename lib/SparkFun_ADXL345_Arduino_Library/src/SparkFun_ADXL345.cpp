@@ -27,9 +27,9 @@ Arduino Uno
 //#define ADXL345_DEVICE (0x53)    // Device Address for ADXL345
 #define ADXL345_TO_READ (6)      // Number of Bytes Read - Two Bytes Per Axis
 
-TwoWire wirePort = TwoWire(1); //GPS I2C bus
+//TwoWire wirePort = TwoWire(1); //GPS I2C bus
 
-ADXL345::ADXL345(uint8_t deviceAddress) {
+ADXL345::ADXL345(uint8_t deviceAddress, TwoWire &wirePort) {
 	status = ADXL345_OK;
 	error_code = ADXL345_NO_ERROR;
 
@@ -37,6 +37,7 @@ ADXL345::ADXL345(uint8_t deviceAddress) {
 	gains[1] = 0.00376009;		// Original gain 0.00376009
 	gains[2] = 0.00349265;		// Original gain 0.00349265
 	_deviceAddress = deviceAddress;
+	_wirePort = &wirePort;
 	I2C = true;
 }
 
@@ -55,11 +56,6 @@ ADXL345::ADXL345(uint8_t deviceAddress) {
 // 	digitalWrite(_CS, HIGH);
 // }
 
-
-
-void initializeADXL345(int ADXL_SDA, int ADXL_SCL) {
-    wirePort.begin(ADXL_SDA, ADXL_SCL, 400000); // Initialize the I2C bus
-}
 
 void ADXL345::powerOn() {
 	//if(I2C) {
@@ -121,27 +117,27 @@ void ADXL345::readFrom(byte address, int num, byte _buff[]) {
 /*************************** WRITE TO I2C ***************************/
 /*      Start; Send Register Address; Send Value To Write; End      */
 void ADXL345::writeToI2C(byte _address, byte _val) {
-	wirePort.beginTransmission(_deviceAddress);
-	wirePort.write(_address);
-	wirePort.write(_val);
-	wirePort.endTransmission();
+	_wirePort->beginTransmission(_deviceAddress);
+	_wirePort->write(_address);
+	_wirePort->write(_val);
+	_wirePort->endTransmission();
 }
 
 /*************************** READ FROM I2C **************************/
 /*                Start; Send Address To Read; End                  */
 void ADXL345::readFromI2C(byte address, int num, byte _buff[]) {
-	wirePort.beginTransmission(_deviceAddress);
-	wirePort.write(address);
-	wirePort.endTransmission();
+	_wirePort->beginTransmission(_deviceAddress);
+	_wirePort->write(address);
+	_wirePort->endTransmission();
 
 //	Wire.beginTransmission(ADXL345_DEVICE);
 // Wire.reqeustFrom contains the beginTransmission and endTransmission in it. 
-	wirePort.requestFrom(_deviceAddress, num);  // Request 6 Bytes
+	_wirePort->requestFrom(_deviceAddress, num);  // Request 6 Bytes
 
 	int i = 0;
-	while(wirePort.available())
+	while(_wirePort->available())
 	{
-		_buff[i] = wirePort.read();				// Receive Byte
+		_buff[i] = _wirePort->read();				// Receive Byte
 		i++;
 	}
 	if(i != num){
