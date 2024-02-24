@@ -5,6 +5,10 @@
 #include <string>
 using std::string;
 using std::to_string;
+#include "ICM_20948.h"
+
+void printFormattedFloat(float val, uint8_t leading, uint8_t decimals);
+void printScaledAGMT(ICM_20948_I2C *sensor);
 
 bool setupOBD();
 bool setupGPS();

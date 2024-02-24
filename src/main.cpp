@@ -10,7 +10,7 @@
 #include "BluetoothSerial.h"
 #include "ELMduino.h"
 
-#include "ICM_20948.h"
+
 
 BluetoothSerial SerialBT;
 #define ELM_PORT SerialBT
@@ -59,6 +59,10 @@ float ADXL1_x, ADXL1_y, ADXL1_z = 9999;
 float ADXL2_x, ADXL2_y, ADXL2_z = 9999;
 int AccelMinX, AccelMinY, AccelMinZ;
 int AccelMaxX, AccelMaxY, AccelMaxZ;
+
+float ICM_aX, ICM_aY, ICM_aZ = 9999;
+float ICM_gX, ICM_gY, ICM_gZ = 9999;
+float ICM_mX, ICM_mY, ICM_mZ = 9999;
 
 float gainX = 1;
 float gainY = 1;
@@ -159,6 +163,19 @@ void loop()
   {
     rpm = rmpTemp;
   }
+  if (ICM.dataReady())
+  {
+    ICM.getAGMT();         // The values are only updated when you call 'getAGMT'
+    ICM_aX = ICM.accX();
+    ICM_aY = ICM.accY();
+    ICM_aZ = ICM.accZ();
+    ICM_gX = ICM.gyrX();
+    ICM_gY = ICM.gyrY();
+    ICM_gZ = ICM.gyrZ();
+    ICM_mX = ICM.magX();
+    ICM_mY = ICM.magY();
+    ICM_mZ = ICM.magZ();
+  }
 
   if (systemErrorState == 1)
   {
@@ -172,7 +189,7 @@ void loop()
 
     if (counter > 40)
     {
-      Serial.println("HEADtime,GPS_groundSpeed,GPS_lat,GPS_long,GPS_heading,GPS_Seconds,GPS_Minutes,GPS_Hours,GPS_Day,GPS_Month,LC_Force,ADXL1_x,ADXL1_y,ADXL1_z,ADXL2_x,ADXL2_y,ADXL2_z,ThrottlePos,rpm");
+      Serial.println("HEADtime,GPS_groundSpeed,GPS_lat,GPS_long,GPS_heading,GPS_Seconds,GPS_Minutes,GPS_Hours,GPS_Day,GPS_Month,LC_Force,ADXL1_x,ADXL1_y,ADXL1_z,ADXL2_x,ADXL2_y,ADXL2_z,ThrottlePos,rpm,ICM_ax,ICM_ay,ICM_az,ICM_gx,ICM_gy,ICM_gz,ICM_mx,ICM_my,ICM_mz");
       counter = 0;
     }
     Serial.print("DATA");
@@ -212,7 +229,26 @@ void loop()
     Serial.print(",");
     Serial.print(throttlePos);
     Serial.print(",");
-    Serial.println(rpm);
+    Serial.print(rpm);
+    Serial.print(",");
+    Serial.print(ICM_aX);
+    Serial.print(",");
+    Serial.print(ICM_aY);
+    Serial.print(",");
+    Serial.print(ICM_aZ);
+    Serial.print(",");
+    Serial.print(ICM_gX);
+    Serial.print(",");
+    Serial.print(ICM_gY);
+    Serial.print(",");
+    Serial.print(ICM_gZ);
+    Serial.print(",");
+    Serial.print(ICM_mX);
+    Serial.print(",");
+    Serial.print(ICM_mY);
+    Serial.print(",");
+    Serial.print(ICM_mZ);
+    Serial.println();
   }
 }
 
@@ -368,7 +404,7 @@ bool setupOBD()
 
 bool setupICM()
 {
-  Serial.print(F("Setting up ICM"));
+  Serial.print(F("Starting ICM"));
   ICM.begin(I2Ctwo, 1);
 
   if (ICM.status != ICM_20948_Stat_Ok)
@@ -386,24 +422,29 @@ bool setupICM()
   ICM.sleep(false);
   ICM.lowPower(false);
   ICM.setSampleMode((ICM_20948_Internal_Acc | ICM_20948_Internal_Gyr), ICM_20948_Sample_Mode_Continuous);
+  
   ICM_20948_fss_t myFSS;
   myFSS.a = gpm2; // 2g range accel
   myFSS.a = gpm2; // 250dps range gyro
   ICM.setFullScale((ICM_20948_Internal_Acc | ICM_20948_Internal_Gyr), myFSS);
+  
   // Set up Digital Low-Pass Filter configuration
   ICM_20948_dlpcfg_t myDLPcfg;
   myDLPcfg.a = acc_d473bw_n499bw;
   myDLPcfg.g = gyr_d361bw4_n376bw5;
   ICM.setDLPFcfg((ICM_20948_Internal_Acc | ICM_20948_Internal_Gyr), myDLPcfg);
+  
   // Choose whether or not to start the magnetometer
   ICM.startupMagnetometer();
   if (ICM.status != ICM_20948_Stat_Ok)
   {
-    Serial.print(F("startupMagnetometer returned: "));
+    Serial.print(F("ERROR startupMagnetometer returned: "));
     Serial.println(ICM.statusString());
+    return false;
   }
 
-  Serial.println(F("ICM setup complete"));
+  Serial.print(F("ICM setup complete, ICM reporting: "));
+  Serial.println(ICM.statusString());
   return true;
 }
 
