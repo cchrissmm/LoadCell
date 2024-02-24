@@ -211,9 +211,12 @@ def read_serial():
                 if serial_log_file is not None and logging_enabled:
                     serial_log_file.write(line + "\n")  # Add a newline character
                 if line.strip():
+                    # Enable the text box to add text
+                    log_text_box.config(state='normal')
                     log_text_box.insert(END, line + "\n")  # Add the line with a newline to the log text box
                     log_text_box.see(END)
-
+                    # Disable the text box again
+                    log_text_box.config(state='disabled')
         except Exception as e:
             print(f"Error reading serial data: {e}")
             print(f"Line causing error: {line}")
