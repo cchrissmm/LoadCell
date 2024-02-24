@@ -10,6 +10,8 @@
 #include "BluetoothSerial.h"
 #include "ELMduino.h"
 
+#include "ICM_20948.h"
+
 BluetoothSerial SerialBT;
 #define ELM_PORT SerialBT
 #define DEBUG_PORT Serial
@@ -25,13 +27,18 @@ ELM327 myELM327;
 #define ADXL_SCL 26   // ADXL345
 #define ADXL_RANGE 16 // 2,4,8,16
 
+#define SECONDADXL false
+
 TwoWire I2Cone = TwoWire(0); // GPS I2C bus
-TwoWire I2Ctwo = TwoWire(1); // GPS I2C bus
+TwoWire I2Ctwo = TwoWire(1); // ADXL I2C bus
 
 HX711 scale;
 SFE_UBLOX_GNSS myGNSS;
 ADXL345 adxl_1 = ADXL345(0x53, I2Ctwo);
+#if SECONDADXL
 ADXL345 adxl_2 = ADXL345(0x1D, I2Ctwo);
+#endif
+ICM_20948_I2C ICM; // I2C 0x68
 
 float IMU_Roll = INT_MAX;
 float IMU_Pitch = INT_MAX;
@@ -48,8 +55,8 @@ string message = "";
 int systemErrorState = 0; // 0 = no error, 1 = error
 int counter = 0;
 
-float ADXL1_x, ADXL1_y, ADXL1_z;
-float ADXL2_x, ADXL2_y, ADXL2_z;
+float ADXL1_x, ADXL1_y, ADXL1_z = 9999;
+float ADXL2_x, ADXL2_y, ADXL2_z = 9999;
 int AccelMinX, AccelMinY, AccelMinZ;
 int AccelMaxX, AccelMaxY, AccelMaxZ;
 
@@ -66,38 +73,43 @@ int rawX, rawY, rawZ; // init variables hold results
 float throttlePos = 999;
 float rpm = 999;
 
-
-
 void setup()
 {
   Serial.begin(115200);
   Serial.println("Relativity DAQ v1.0.0");
   Serial.println("Setup started............................................");
 
-  if(!setupLoadCell())
+  if (!setupLoadCell())
   {
     systemErrorState = 1;
   }
 
-  if(!setupGPS())
+  if (!setupGPS())
   {
     if (!setupGYS())
     {
       systemErrorState = 1;
     }
   }
-    if(!setupGYS()){
+  if (!setupGYS())
+  {
     systemErrorState = 1;
-    }
-    
-    if(!setupOBD()){
-    systemErrorState = 1;
-    }
+  }
 
-    if (!systemErrorState)
-      Serial.println("Setup completed with no errors............................................");
-    else
-      Serial.println("ERROR Setup completed with errors............................................");
+  if (!setupOBD())
+  {
+    systemErrorState = 1;
+  }
+
+  if (!setupICM())
+  {
+    systemErrorState = 1;
+  }
+
+  if (!systemErrorState)
+    Serial.println("Setup completed with no errors............................................");
+  else
+    Serial.println("ERROR Setup completed with errors............................................");
 }
 
 void loop()
@@ -128,11 +140,13 @@ void loop()
   ADXL1_y = (rawY - offsetY) * 9.81 / gainY;
   ADXL1_z = (rawZ - offsetZ) * 9.81 / gainZ;
 
+#if SECONDADXL
   adxl_2.readAccel(&rawX, &rawY, &rawZ);
 
   ADXL2_x = (rawX - offsetX) * 9.81 / gainX;
   ADXL2_y = (rawY - offsetY) * 9.81 / gainY;
   ADXL2_z = (rawZ - offsetZ) * 9.81 / gainZ;
+#endif
 
   float throttlePosTemp = myELM327.throttle();
   if (myELM327.nb_rx_state == ELM_SUCCESS)
@@ -269,15 +283,17 @@ bool setupGPS()
 
 bool setupGYS()
 {
-  //initializeADXL345(ADXL_SDA, ADXL_SCL);
+  // initializeADXL345(ADXL_SDA, ADXL_SCL);
 
   I2Ctwo.begin(ADXL_SDA, ADXL_SCL, 400000); // SDA, SCL
 
   adxl_1.powerOn();
   adxl_1.setRangeSetting(ADXL_RANGE);
 
+#if SECONDADXL
   adxl_2.powerOn();
   adxl_2.setRangeSetting(ADXL_RANGE);
+#endif
 
   adxl_1.readAccel(&rawX, &rawY, &rawZ); // initialise the ranges to a real value
   AccelMaxX = rawX;
@@ -350,8 +366,50 @@ bool setupOBD()
   return true;
 }
 
-void calGYS() {
-if (Serial.available())
+bool setupICM()
+{
+  Serial.print(F("Setting up ICM"));
+  ICM.begin(I2Ctwo, 1);
+
+  if (ICM.status != ICM_20948_Stat_Ok)
+  {
+    Serial.println("ICM sensor not set up, Trying again...");
+    ICM.begin(I2Ctwo, 1);
+  }
+  if (ICM.status != ICM_20948_Stat_Ok)
+  {
+    Serial.println("ERROR ICM sensor not set up");
+    return false;
+  }
+
+  ICM.enableDebugging();
+  ICM.sleep(false);
+  ICM.lowPower(false);
+  ICM.setSampleMode((ICM_20948_Internal_Acc | ICM_20948_Internal_Gyr), ICM_20948_Sample_Mode_Continuous);
+  ICM_20948_fss_t myFSS;
+  myFSS.a = gpm2; // 2g range accel
+  myFSS.a = gpm2; // 250dps range gyro
+  ICM.setFullScale((ICM_20948_Internal_Acc | ICM_20948_Internal_Gyr), myFSS);
+  // Set up Digital Low-Pass Filter configuration
+  ICM_20948_dlpcfg_t myDLPcfg;
+  myDLPcfg.a = acc_d473bw_n499bw;
+  myDLPcfg.g = gyr_d361bw4_n376bw5;
+  ICM.setDLPFcfg((ICM_20948_Internal_Acc | ICM_20948_Internal_Gyr), myDLPcfg);
+  // Choose whether or not to start the magnetometer
+  ICM.startupMagnetometer();
+  if (ICM.status != ICM_20948_Stat_Ok)
+  {
+    Serial.print(F("startupMagnetometer returned: "));
+    Serial.println(ICM.statusString());
+  }
+
+  Serial.println(F("ICM setup complete"));
+  return true;
+}
+
+void calGYS()
+{
+  if (Serial.available())
   {
     String str = Serial.readStringUntil('\n');
     Serial.print("Received: ");
