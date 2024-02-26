@@ -179,22 +179,22 @@ def read_serial():
                 # Update the live data2 box = load cell
                 live_data2_box.delete(1.0, END)
                 live_data2_box.insert(END, str(data_line[10]))  # Index 2 corresponds to the third column
-                # Update the live data2 box = load cell
+                # Update the live data3 box = AX
                 live_data3_box.delete(1.0, END)
-                live_data3_box.insert(END, str(data_line[14]))  # Index 2 corresponds to the third column
+                live_data3_box.insert(END, str(data_line[19]))  # Index 2 corresponds to the third column
                 #GPS Time
                 GPSTime_box.delete(1.0, END)
                 gps_time = ':'.join(["GPS Time GMT "+ str(data_line[7]), str(data_line[6]), str(data_line[5])])
                 GPSTime_box.insert(END, gps_time)  # Index 2 corresponds to the third column
                 # GYS X
                 GYSX_label.delete(1.0, END)
-                GYSX_label.insert(END, "AX: " + str(data_line[11]))  # Index 2 corresponds to the third column
+                GYSX_label.insert(END, "SATS: " + str(data_line[28]))  # Index 2 corresponds to the third column
                  # GYS Y
                 GYSY_label.delete(1.0, END)
-                GYSY_label.insert(END, "AY: " + str(data_line[12]))  # Index 2 corresponds to the third column
+                GYSY_label.insert(END, "AY: " + str(data_line[20]))  # Index 2 corresponds to the third column
                  # GYS Z
                 GYSZ_label.delete(1.0, END)
-                GYSZ_label.insert(END, "AZ: " + str(data_line[13]))  # Index 2 corresponds to the third column
+                GYSZ_label.insert(END, "GZ: " + str(data_line[24]))  # Index 2 corresponds to the third column
                 
                 counter += 1
                 if counter >= 60:
@@ -381,7 +381,7 @@ live_data2_box = Text(root, width=8, height=1,font=("default", 50))
 live_data2_box.grid(row=11, column=2, columnspan=2, padx=5, pady=5, sticky='W')
 
 # GPS AX
-live_data3_label = Label(root, text="GPS AX:", font=("default", 16))
+live_data3_label = Label(root, text="ICM AX:", font=("default", 16))
 live_data3_label.grid(row=10, column=4, sticky='W')
 live_data3_box = Text(root, width=6, height=1,font=("default", 50))
 live_data3_box.grid(row=11, column=4, columnspan=2, padx=5, pady=5, sticky='W')

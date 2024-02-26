@@ -17,4 +17,11 @@ bool setupLoadCell();
 bool setupICM();
 void calGYS();
 
+void logOBD();
+void logGPS();
+void logGYS();
+void logLoadCell();
+void logICM();
+
+
 #endif /* MAIN_H_ */

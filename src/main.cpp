@@ -10,7 +10,8 @@
 #include "BluetoothSerial.h"
 #include "ELMduino.h"
 
-
+#include <iomanip>
+#include <iostream>
 
 BluetoothSerial SerialBT;
 #define ELM_PORT SerialBT
@@ -39,6 +40,12 @@ ADXL345 adxl_1 = ADXL345(0x53, I2Ctwo);
 ADXL345 adxl_2 = ADXL345(0x1D, I2Ctwo);
 #endif
 ICM_20948_I2C ICM; // I2C 0x68
+
+long timeNow, timeAtBoot = 0;
+long GPS_lat, GPS_long = 9999;
+float GPS_groundSpeed = 9999;
+float GPS_heading = 9999; // degrees
+int GPS_Seconds, GPS_Minutes, GPS_Hours, GPS_Day, GPS_Month, GPS_Sats, GPS_Precision = 9999;
 
 float IMU_Roll = INT_MAX;
 float IMU_Pitch = INT_MAX;
@@ -83,6 +90,8 @@ void setup()
   Serial.println("Relativity DAQ v1.0.0");
   Serial.println("Setup started............................................");
 
+  timeAtBoot = millis();
+
   if (!setupLoadCell())
   {
     systemErrorState = 1;
@@ -120,63 +129,6 @@ void loop()
 {
   calGYS();
 
-  long time = millis();
-  long GPS_lat = myGNSS.getLatitude();
-  long GPS_long = myGNSS.getLongitude();
-  long GPS_groundSpeed_mms = myGNSS.getGroundSpeed();
-  float GPS_groundSpeed = GPS_groundSpeed_mms * 0.001 * 3.6;
-  long GPS_heading_105 = myGNSS.getHeading();
-  float GPS_heading = GPS_heading_105 * 0.000001; // degrees
-  int GPS_Seconds = myGNSS.getSecond();
-  int GPS_Minutes = myGNSS.getMinute();
-  int GPS_Hours = myGNSS.getHour();
-  int GPS_Day = myGNSS.getDay();
-  int GPS_Month = myGNSS.getMonth();
-
-  if (scale.is_ready())
-  { // only proceed if HX711 is ready to read
-    LC_Force = scale.get_units();
-  }
-
-  adxl_1.readAccel(&rawX, &rawY, &rawZ);
-
-  ADXL1_x = (rawX - offsetX) * 9.81 / gainX;
-  ADXL1_y = (rawY - offsetY) * 9.81 / gainY;
-  ADXL1_z = (rawZ - offsetZ) * 9.81 / gainZ;
-
-#if SECONDADXL
-  adxl_2.readAccel(&rawX, &rawY, &rawZ);
-
-  ADXL2_x = (rawX - offsetX) * 9.81 / gainX;
-  ADXL2_y = (rawY - offsetY) * 9.81 / gainY;
-  ADXL2_z = (rawZ - offsetZ) * 9.81 / gainZ;
-#endif
-
-  float throttlePosTemp = myELM327.throttle();
-  if (myELM327.nb_rx_state == ELM_SUCCESS)
-  {
-    throttlePos = throttlePosTemp;
-  }
-
-  float rmpTemp = myELM327.rpm();
-  if (myELM327.nb_rx_state == ELM_SUCCESS)
-  {
-    rpm = rmpTemp;
-  }
-  if (ICM.dataReady())
-  {
-    ICM.getAGMT();         // The values are only updated when you call 'getAGMT'
-    ICM_aX = ICM.accX();
-    ICM_aY = ICM.accY();
-    ICM_aZ = ICM.accZ();
-    ICM_gX = ICM.gyrX();
-    ICM_gY = ICM.gyrY();
-    ICM_gZ = ICM.gyrZ();
-    ICM_mX = ICM.magX();
-    ICM_mY = ICM.magY();
-    ICM_mZ = ICM.magZ();
-  }
-
   if (systemErrorState == 1)
   {
     // Serial.println("ERROR system error");
@@ -185,69 +137,82 @@ void loop()
   }
   else
   {
+    logGPS();
+    logLoadCell();
+    logGYS();
+    logOBD();
+    logICM();
+
     counter += 1;
 
     if (counter > 40)
     {
-      Serial.println("HEADtime,GPS_groundSpeed,GPS_lat,GPS_long,GPS_heading,GPS_Seconds,GPS_Minutes,GPS_Hours,GPS_Day,GPS_Month,LC_Force,ADXL1_x,ADXL1_y,ADXL1_z,ADXL2_x,ADXL2_y,ADXL2_z,ThrottlePos,rpm,ICM_ax,ICM_ay,ICM_az,ICM_gx,ICM_gy,ICM_gz,ICM_mx,ICM_my,ICM_mz");
+      Serial.println("HEADtime,GPS_groundSpeed,GPS_lat,GPS_long,GPS_heading,GPS_Seconds,GPS_Minutes,GPS_Hours,GPS_Day,GPS_Month,LC_Force,ADXL1_x,ADXL1_y,ADXL1_z,ADXL2_x,ADXL2_y,ADXL2_z,ThrottlePos,rpm,ICM_ax,ICM_ay,ICM_az,ICM_gx,ICM_gy,ICM_gz,ICM_mx,ICM_my,ICM_mz,GPS_Sats,GPS_Precision");
       counter = 0;
     }
+
+    timeNow = millis() - timeAtBoot;
+
     Serial.print("DATA");
-    Serial.print(time);
+    Serial.print(timeNow); // 0
     Serial.print(",");
     Serial.print(GPS_groundSpeed);
     Serial.print(",");
-    Serial.print(GPS_lat);
+    Serial.print(GPS_lat); // 2
     Serial.print(",");
     Serial.print(GPS_long);
     Serial.print(",");
-    Serial.print(GPS_heading);
+    Serial.print(GPS_heading); // 4
     Serial.print(",");
     Serial.print(GPS_Seconds);
     Serial.print(",");
-    Serial.print(GPS_Minutes);
+    Serial.print(GPS_Minutes); // 6
     Serial.print(",");
     Serial.print(GPS_Hours);
     Serial.print(",");
-    Serial.print(GPS_Day);
+    Serial.print(GPS_Day); // 8
     Serial.print(",");
     Serial.print(GPS_Month);
     Serial.print(",");
-    Serial.print(LC_Force);
+    Serial.print(LC_Force); // 10
     Serial.print(",");
     Serial.print(ADXL1_x);
     Serial.print(",");
-    Serial.print(ADXL1_y);
+    Serial.print(ADXL1_y); // 12
     Serial.print(",");
     Serial.print(ADXL1_z);
     Serial.print(",");
-    Serial.print(ADXL2_x);
+    Serial.print(ADXL2_x); // 14
     Serial.print(",");
     Serial.print(ADXL2_y);
     Serial.print(",");
-    Serial.print(ADXL2_z);
+    Serial.print(ADXL2_z); // 16
     Serial.print(",");
     Serial.print(throttlePos);
     Serial.print(",");
-    Serial.print(rpm);
+    Serial.print(rpm); // 18
     Serial.print(",");
     Serial.print(ICM_aX);
     Serial.print(",");
-    Serial.print(ICM_aY);
+    Serial.print(ICM_aY); // 20
     Serial.print(",");
     Serial.print(ICM_aZ);
     Serial.print(",");
-    Serial.print(ICM_gX);
+    Serial.print(ICM_gX); // 22
     Serial.print(",");
     Serial.print(ICM_gY);
     Serial.print(",");
-    Serial.print(ICM_gZ);
+    Serial.print(ICM_gZ); // 24
     Serial.print(",");
     Serial.print(ICM_mX);
     Serial.print(",");
-    Serial.print(ICM_mY);
+    Serial.print(ICM_mY); // 26
     Serial.print(",");
     Serial.print(ICM_mZ);
+    Serial.print(",");
+    Serial.print(GPS_Sats); // 28
+    Serial.print(",");
+    Serial.print(GPS_Precision); // 30
     Serial.println();
   }
 }
@@ -422,18 +387,18 @@ bool setupICM()
   ICM.sleep(false);
   ICM.lowPower(false);
   ICM.setSampleMode((ICM_20948_Internal_Acc | ICM_20948_Internal_Gyr), ICM_20948_Sample_Mode_Continuous);
-  
+
   ICM_20948_fss_t myFSS;
   myFSS.a = gpm2; // 2g range accel
   myFSS.a = gpm2; // 250dps range gyro
   ICM.setFullScale((ICM_20948_Internal_Acc | ICM_20948_Internal_Gyr), myFSS);
-  
+
   // Set up Digital Low-Pass Filter configuration
   ICM_20948_dlpcfg_t myDLPcfg;
   myDLPcfg.a = acc_d473bw_n499bw;
   myDLPcfg.g = gyr_d361bw4_n376bw5;
   ICM.setDLPFcfg((ICM_20948_Internal_Acc | ICM_20948_Internal_Gyr), myDLPcfg);
-  
+
   // Choose whether or not to start the magnetometer
   ICM.startupMagnetometer();
   if (ICM.status != ICM_20948_Stat_Ok)
@@ -560,5 +525,82 @@ void calGYS()
       Serial.print(" Offset Z: ");
       Serial.println(offsetZ);
     }
+  }
+}
+
+void logLoadCell()
+{
+  if (scale.is_ready())
+  { // only proceed if HX711 is ready to read
+    LC_Force = scale.get_units();
+  }
+}
+
+void logGYS()
+{
+  adxl_1.readAccel(&rawX, &rawY, &rawZ);
+
+  ADXL1_x = (rawX - offsetX) * 9.81 / gainX;
+  ADXL1_y = (rawY - offsetY) * 9.81 / gainY;
+  ADXL1_z = (rawZ - offsetZ) * 9.81 / gainZ;
+
+#if SECONDADXL
+  adxl_2.readAccel(&rawX, &rawY, &rawZ);
+
+  ADXL2_x = (rawX - offsetX) * 9.81 / gainX;
+  ADXL2_y = (rawY - offsetY) * 9.81 / gainY;
+  ADXL2_z = (rawZ - offsetZ) * 9.81 / gainZ;
+#endif
+}
+
+void logOBD()
+{
+  float throttlePosTemp = myELM327.throttle();
+
+  if (myELM327.nb_rx_state == ELM_SUCCESS)
+  {
+    throttlePos = throttlePosTemp;
+  }
+
+  float rmpTemp = myELM327.rpm();
+  if (myELM327.nb_rx_state == ELM_SUCCESS)
+  {
+    rpm = rmpTemp;
+  }
+}
+
+void logGPS()
+{
+  GPS_lat = myGNSS.getLatitude();
+  GPS_long = myGNSS.getLongitude();
+  int GPS_groundSpeed_mms = myGNSS.getGroundSpeed();
+  GPS_groundSpeed = GPS_groundSpeed_mms * 0.001 * 3.6;
+  int GPS_heading_105 = myGNSS.getHeading();
+  GPS_heading = GPS_heading_105 * 0.000001; // degrees
+  GPS_Seconds = myGNSS.getSecond();
+  GPS_Minutes = myGNSS.getMinute();
+  GPS_Hours = myGNSS.getHour();
+  GPS_Day = myGNSS.getDay();
+  GPS_Month = myGNSS.getMonth();
+  GPS_Sats = myGNSS.getSIV();
+  //GPS_Precision = myGNSS.getHorizontalAccuracy();
+}
+
+void logICM()
+{
+  if (ICM.dataReady())
+  {
+    ICM.getAGMT(); // The values are only updated when you call 'getAGMT'
+
+    ICM_aX = round(ICM.accX() * 0.001 * 10) / 10;
+    ICM_aY = round(ICM.accY() * 0.001 * 10) / 10;
+    ICM_aZ = round(ICM.accZ() * 0.001 * 10) / 10;
+
+    ICM_gX = ICM.gyrX();
+    ICM_gY = ICM.gyrY();
+    ICM_gZ = ICM.gyrZ();
+    ICM_mX = ICM.magX();
+    ICM_mY = ICM.magY();
+    ICM_mZ = ICM.magZ();
   }
 }
