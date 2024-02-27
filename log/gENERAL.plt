@@ -10,14 +10,15 @@ GPS_Minutes  nobit 1 unit=2 scmin=-32.2 scmax=87.4
 GPS_Month  nobit 2 unit=1 scmin=-4.8 scmax=16
 ThrottlePos  nobit 3 unit=0.00 scmin=-499.5 scmax=2097.9
 GPS_Seconds  nobit 4 unit=42 scmin=-164.8 scmax=191.4
-GPS_groundSpeed  nobit 5 unit=0.00 scmin=-14.3 scmax=14.3
+rpm  nobit 1 unit=0.00 scansc
+GPS_groundSpeed  nobit 5 unit=0.00 scmin=-237.193 scmax=96.1694
 GPS_heading  nobit 6 unit=15.14 scmin=-13.2 scmax=15.4
 GPS_lat  nobit 7 unit=-381575004 scmin=-12.1 scmax=16.5
 GPS_long  nobit 8 unit=1445564190 scmin=-11 scmax=17.6
-LC_Force  nobit 1 unit=-0.68 scmin=-12.332 scmax=-21.224
+LC_Force  nobit 1 unit=-0.68 scmin=230.776 scmax=-20.0265
 ICM_ax  nobit 2 unit=-1000.98 scmin=-18181.9 scmax=34664.8
 ICM_ay  nobit 3 unit=0.00 scmin=-10698.4 scmax=24778.4
-ICM_az  nobit 4 unit=9999.00 scmin=-823.542 scmax=6845.73
+ICM_az  nobit 4 unit=9999.00 scmin=-4.31964 scmax=4.31592
 ICM_gx  nobit 5 unit=0.00 scmin=-61.54 scmax=223.056
 ICM_gy  nobit 6 unit=0.00 scmin=-114.746 scmax=592.558
 ICM_gz  nobit 7 unit=9999.00 scmin=-515.844 scmax=3911.64

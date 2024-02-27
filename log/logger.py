@@ -11,6 +11,7 @@ import re
 import time
 import threading
 from queue import Queue
+import configparser
 
 root = Tk()
 
@@ -43,6 +44,35 @@ status_update_queue = Queue()
 # Initialize traceFileName with a default filename
 traceFileName = StringVar(value="trace")
 
+# Get the directory of the script
+script_dir = os.path.dirname(os.path.realpath(__file__))
+
+# Create the path to the .ini file
+ini_path = os.path.join(script_dir, 'settings.ini')
+
+# Create a ConfigParser object
+config = configparser.ConfigParser()
+
+# Check if the .ini file exists
+if os.path.exists(ini_path):
+    # Read the .ini file
+    config.read(ini_path)
+else:
+    print("settings.ini file does not exist")
+
+# Get the names and indices from the .ini file
+if config.has_section('LogBoxes'):
+    logbox_name01 = config.get('LogBoxes', 'LOGBOXNAME01')
+    logbox_index01 = config.getint('LogBoxes', 'LOGBOXINDEX01')
+
+    logbox_name02 = config.get('LogBoxes', 'LOGBOXNAME02')
+    logbox_index02 = config.getint('LogBoxes', 'LOGBOXINDEX02')
+
+    logbox_name03 = config.get('LogBoxes', 'LOGBOXNAME03')
+    logbox_index03 = config.getint('LogBoxes', 'LOGBOXINDEX03')
+else:
+    print("LogBoxes section does not exist in settings.ini")
+    
 # Function to update GUI from the queue
 def update_gui_from_queue():
     while not status_update_queue.empty():
@@ -186,15 +216,15 @@ def read_serial():
                 GPSTime_box.delete(1.0, END)
                 gps_time = ':'.join(["GPS Time GMT "+ str(data_line[7]), str(data_line[6]), str(data_line[5])])
                 GPSTime_box.insert(END, gps_time)  # Index 2 corresponds to the third column
-                # GYS X
-                GYSX_label.delete(1.0, END)
-                GYSX_label.insert(END, "SATS: " + str(data_line[28]))  # Index 2 corresponds to the third column
-                 # GYS Y
-                GYSY_label.delete(1.0, END)
-                GYSY_label.insert(END, "AY: " + str(data_line[20]))  # Index 2 corresponds to the third column
-                 # GYS Z
-                GYSZ_label.delete(1.0, END)
-                GYSZ_label.insert(END, "GZ: " + str(data_line[24]))  # Index 2 corresponds to the third column
+                
+                logbox01.delete(1.0, END)
+                logbox01.insert(END, logbox_name01 + ": " + str(data_line[logbox_index01]))  # Index 2 corresponds to the third column
+                
+                logbox02.delete(1.0, END)
+                logbox02.insert(END, logbox_name02 + ": " + str(data_line[logbox_index02]))  # Index 2 corresponds to the third column
+               
+                logbox03.delete(1.0, END)
+                logbox03.insert(END, logbox_name02 + ": " + str(data_line[logbox_index03]))  # Index 2 corresponds to the third column
                 
                 counter += 1
                 if counter >= 60:
@@ -225,7 +255,7 @@ def read_serial():
             pass
 
     root.after(10, read_serial)
-
+    
 #new save as filename function
 def save_trace():
     filename = traceFileName.get()
@@ -369,7 +399,7 @@ filename_label = Label(root, text=traceFileName.get(), font=("default", 14))
 filename_label.grid(row=9, column=4, padx=5, pady=5)
 
 # Velocity
-live_data1_label = Label(root, text="Speed (m/s):", font=("default", 16))
+live_data1_label = Label(root, text="Speed (kmh):", font=("default", 16))
 live_data1_label.grid(row=10, column=0, sticky='W')
 live_data1_box = Text(root, width=8, height=1,font=("default", 50))
 live_data1_box.grid(row=11, column=0, columnspan=2, padx=5, pady=5, sticky='W')
@@ -380,27 +410,28 @@ live_data2_label.grid(row=10, column=2, sticky='W')
 live_data2_box = Text(root, width=8, height=1,font=("default", 50))
 live_data2_box.grid(row=11, column=2, columnspan=2, padx=5, pady=5, sticky='W')
 
-# GPS AX
+
 live_data3_label = Label(root, text="ICM AX:", font=("default", 16))
 live_data3_label.grid(row=10, column=4, sticky='W')
 live_data3_box = Text(root, width=6, height=1,font=("default", 50))
 live_data3_box.grid(row=11, column=4, columnspan=2, padx=5, pady=5, sticky='W')
 
-# GYS X
-GYSX_label = Text(root, width=10, height=1,font=("default", 12))
-GYSX_label.grid(row=13, column=0, columnspan=1, padx=5, pady=5, sticky='W')
 
-# GYZ Y
-GYSY_label = Text(root, width=10, height=1,font=("default", 12))
-GYSY_label.grid(row=13, column=1, columnspan=1, padx=5, pady=5, sticky='W')
+logbox01 = Text(root, width=10, height=1,font=("default", 12))
+logbox01.grid(row=13, column=0, columnspan=1, padx=5, pady=5, sticky='W')
 
-# GYS Z
-GYSZ_label = Text(root, width=10, height=1,font=("default", 12))
-GYSZ_label.grid(row=13, column=2, columnspan=1, padx=5, pady=5, sticky='W')
+
+logbox02 = Text(root, width=10, height=1,font=("default", 12))
+logbox02.grid(row=13, column=1, columnspan=1, padx=5, pady=5, sticky='W')
+
+
+logbox03 = Text(root, width=10, height=1,font=("default", 12))
+logbox03.grid(row=13, column=2, columnspan=1, padx=5, pady=5, sticky='W')
 
 # Time
 GPSTime_box = Text(root, width=25, height=1,font=("default", 12))
 GPSTime_box.grid(row=13, column=3, columnspan=2, padx=5, pady=5, sticky='W')
+
 # Start reading data from the serial port
 read_serial()
 

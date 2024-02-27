@@ -84,6 +84,9 @@ int rawX, rawY, rawZ; // init variables hold results
 float throttlePos = 999;
 float rpm = 999;
 
+bool useLC = true, useGPS = true, useGYS = true;
+bool useOBD= false, useICM = false;
+
 void setup()
 {
   Serial.begin(115200);
@@ -91,6 +94,7 @@ void setup()
   Serial.println("Setup started............................................");
 
   timeAtBoot = millis();
+  EEPROM.begin(512); // Initialize EEPROM with a size of 512 bytes
 
   if (!setupLoadCell())
   {
@@ -99,11 +103,12 @@ void setup()
 
   if (!setupGPS())
   {
-    if (!setupGYS())
+    if (!setupGPS())
     {
       systemErrorState = 1;
     }
   }
+  
   if (!setupGYS())
   {
     systemErrorState = 1;
@@ -219,8 +224,8 @@ void loop()
 
 bool setupLoadCell()
 {
-  EEPROM.begin(512); // Initialize EEPROM with a size of 512 bytes
-
+  if(useLC) {
+  Serial.println("Begin LC setup");
   if (EEPROM.get(0, LC_scaleValue))
   {
     Serial.print("LC Calibration factor loaded from EEPROM: ");
@@ -254,11 +259,15 @@ bool setupLoadCell()
   scale.set_scale(LC_scaleValue);
   scale.set_raw_mode();
 
+  Serial.println("LC setup completed OK");
+  }
   return true;
 }
 
 bool setupGPS()
 {
+  if(useGPS) {
+  Serial.println("Begin GPS setup");
   I2Cone.begin(GPS_SDA, GPS_SCL, 400000); // SDA, SCL
 
   if (myGNSS.begin(I2Cone) == false)
@@ -278,14 +287,17 @@ bool setupGPS()
     Serial.println("ERROR Set Nav Frequency Failed");
     return false;
   }
-
+  Serial.println("GPS setup completed OK");
+  }
+  
   return true;
 }
 
 bool setupGYS()
 {
+  if(useGYS) {
   // initializeADXL345(ADXL_SDA, ADXL_SCL);
-
+Serial.println("Begin GYS setup");
   I2Ctwo.begin(ADXL_SDA, ADXL_SCL, 400000); // SDA, SCL
 
   adxl_1.powerOn();
@@ -333,12 +345,16 @@ bool setupGYS()
     Serial.println("ERROR: ADXL Offset values not found in EEPROM");
     return false;
   }
-
+  Serial.println("GYS setup completed OK");
+  }
+  
   return true;
 }
 
 bool setupOBD()
 {
+  if(useOBD) {
+    Serial.println("Begin OBD setup");
   // establish BT connection
   SerialBT.begin("RelativityDAQ", true);
 
@@ -363,13 +379,16 @@ bool setupOBD()
   {
     Serial.println("Connected to ELM327 OK");
   }
-
+  Serial.println("OBD setup completed OK");
+  }
+  
   return true;
 }
 
 bool setupICM()
 {
-  Serial.print(F("Starting ICM"));
+  if(useICM) {
+  Serial.println("Begin ICM setup");
   ICM.begin(I2Ctwo, 1);
 
   if (ICM.status != ICM_20948_Stat_Ok)
@@ -410,6 +429,8 @@ bool setupICM()
 
   Serial.print(F("ICM setup complete, ICM reporting: "));
   Serial.println(ICM.statusString());
+  Serial.println("ICM setup completed OK");
+  }
   return true;
 }
 
@@ -530,14 +551,17 @@ void calGYS()
 
 void logLoadCell()
 {
+  if(useLC) {
   if (scale.is_ready())
   { // only proceed if HX711 is ready to read
     LC_Force = scale.get_units();
   }
 }
+}
 
 void logGYS()
 {
+  if(useGYS) {
   adxl_1.readAccel(&rawX, &rawY, &rawZ);
 
   ADXL1_x = (rawX - offsetX) * 9.81 / gainX;
@@ -551,10 +575,12 @@ void logGYS()
   ADXL2_y = (rawY - offsetY) * 9.81 / gainY;
   ADXL2_z = (rawZ - offsetZ) * 9.81 / gainZ;
 #endif
+  }
 }
 
 void logOBD()
 {
+  if(useOBD) {
   float throttlePosTemp = myELM327.throttle();
 
   if (myELM327.nb_rx_state == ELM_SUCCESS)
@@ -567,10 +593,12 @@ void logOBD()
   {
     rpm = rmpTemp;
   }
+  }
 }
 
 void logGPS()
 {
+  if(useGPS) {
   GPS_lat = myGNSS.getLatitude();
   GPS_long = myGNSS.getLongitude();
   int GPS_groundSpeed_mms = myGNSS.getGroundSpeed();
@@ -584,10 +612,12 @@ void logGPS()
   GPS_Month = myGNSS.getMonth();
   GPS_Sats = myGNSS.getSIV();
   //GPS_Precision = myGNSS.getHorizontalAccuracy();
+  }
 }
 
 void logICM()
 {
+  if(useICM) {
   if (ICM.dataReady())
   {
     ICM.getAGMT(); // The values are only updated when you call 'getAGMT'
@@ -602,5 +632,6 @@ void logICM()
     ICM_mX = ICM.magX();
     ICM_mY = ICM.magY();
     ICM_mZ = ICM.magZ();
+  }
   }
 }
