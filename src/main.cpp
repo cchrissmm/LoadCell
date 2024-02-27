@@ -95,6 +95,7 @@ void setup()
 
   timeAtBoot = millis();
   EEPROM.begin(512); // Initialize EEPROM with a size of 512 bytes
+  
 
   if (!setupLoadCell())
   {
@@ -108,7 +109,7 @@ void setup()
       systemErrorState = 1;
     }
   }
-  
+
   if (!setupGYS())
   {
     systemErrorState = 1;
@@ -132,7 +133,7 @@ void setup()
 
 void loop()
 {
-  calGYS();
+  config();
 
   if (systemErrorState == 1)
   {
@@ -228,12 +229,12 @@ bool setupLoadCell()
   Serial.println("Begin LC setup");
   if (EEPROM.get(0, LC_scaleValue))
   {
-    Serial.print("LC Calibration factor loaded from EEPROM: ");
+    Serial.print("LC scale factor loaded from EEPROM: ");
     Serial.println(LC_scaleValue);
-    if (LC_scaleValue < 30000 || LC_scaleValue > 40000)
+    if (LC_scaleValue < 200 || LC_scaleValue > 400)
     {
       Serial.println("ERROR: LC Calibration factor out of range");
-      // return false;
+      return false;
     }
   }
   else
@@ -434,7 +435,7 @@ bool setupICM()
   return true;
 }
 
-void calGYS()
+void config()
 {
   if (Serial.available())
   {
@@ -546,6 +547,8 @@ void calGYS()
       Serial.print(" Offset Z: ");
       Serial.println(offsetZ);
     }
+
+    
   }
 }
 

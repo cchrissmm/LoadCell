@@ -15,7 +15,7 @@ bool setupGPS();
 bool setupGYS();
 bool setupLoadCell();
 bool setupICM();
-void calGYS();
+void config();
 
 void logOBD();
 void logGPS();

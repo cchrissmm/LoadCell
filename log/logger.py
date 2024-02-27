@@ -73,6 +73,7 @@ if config.has_section('LogBoxes'):
 else:
     print("LogBoxes section does not exist in settings.ini")
     
+    
 # Function to update GUI from the queue
 def update_gui_from_queue():
     while not status_update_queue.empty():
@@ -305,6 +306,7 @@ def toggle_connection():
         connect_button.config(text='Connect', command=toggle_connection)
     else:
         connect()
+        configESP()
         connect_button.config(text='Disconnect', command=toggle_connection)
     connection_enabled = not connection_enabled
 
@@ -319,6 +321,24 @@ def set_file():
     if filename is not None:  # If the user didn't cancel the dialog
         traceFileName.set(filename)
         filename_label.config(text=filename)
+        
+def configESP():
+    if config.has_section('Devices'):
+        useGYS = config.getboolean('Devices', 'USEGYS')
+        if useGYS:
+            send_serial_data("<USEGYS>")
+        useGPS = config.getboolean('Devices', 'USEGPS')
+        if useGPS:
+            send_serial_data("<USEGPS>")
+        useLC = config.getboolean('Devices', 'USELC')
+        if useLC:
+            send_serial_data("<USELC>")
+        useICM = config.getboolean('Devices', 'USEICM')
+        if useICM:
+            send_serial_data("<USEICM>")
+        useOBD = config.getboolean('Devices', 'USEOBD')
+        if useOBD:
+            send_serial_data("<USEOBD>")        
 
 # Initialize the periodic GUI update
 update_gui_from_queue()
