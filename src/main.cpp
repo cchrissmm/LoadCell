@@ -380,6 +380,13 @@ bool setupOBD()
   {
     Serial.println("Connected to ELM327 OK");
   }
+  uint32_t pidsSupported= myELM327.supportedPIDs_1_20();
+
+  if (myELM327.nb_rx_state == ELM_SUCCESS)
+  {
+    Serial.print("PIDs 1-20 supported: ");
+    Serial.println(pidsSupported, BIN);
+  }
   Serial.println("OBD setup completed OK");
   }
   
