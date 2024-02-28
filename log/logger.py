@@ -16,7 +16,7 @@ import configparser
 root = Tk()
 
 # Set the size and title of the window
-root.geometry("1100x600")
+root.geometry("1100x700")
 root.title("Relativity Engineering Vehicle Data Logger")
 
 # Create the serial connection, text box, and ring buffer variables
@@ -70,6 +70,10 @@ if config.has_section('LogBoxes'):
 
     logbox_name03 = config.get('LogBoxes', 'LOGBOXNAME03')
     logbox_index03 = config.getint('LogBoxes', 'LOGBOXINDEX03')
+    
+    logbox_name04 = config.get('LogBoxes', 'LOGBOXNAME04')
+    logbox_index04 = config.getint('LogBoxes', 'LOGBOXINDEX04')
+    
 else:
     print("LogBoxes section does not exist in settings.ini")
     
@@ -225,7 +229,10 @@ def read_serial():
                 logbox02.insert(END, logbox_name02 + ": " + str(data_line[logbox_index02]))  # Index 2 corresponds to the third column
                
                 logbox03.delete(1.0, END)
-                logbox03.insert(END, logbox_name02 + ": " + str(data_line[logbox_index03]))  # Index 2 corresponds to the third column
+                logbox03.insert(END, logbox_name03 + ": " + str(data_line[logbox_index03]))  # Index 2 corresponds to the third column
+                
+                logbox04.delete(1.0, END)
+                logbox04.insert(END, logbox_name04 + ": " + str(data_line[logbox_index04]))  # Index 2 corresponds to the third column
                 
                 counter += 1
                 if counter >= 60:
@@ -442,11 +449,14 @@ logbox01.grid(row=13, column=0, columnspan=1, padx=5, pady=5, sticky='W')
 
 
 logbox02 = Text(root, width=10, height=1,font=("default", 12))
-logbox02.grid(row=13, column=1, columnspan=1, padx=5, pady=5, sticky='W')
+logbox02.grid(row=14, column=0, columnspan=1, padx=5, pady=5, sticky='W')
 
 
 logbox03 = Text(root, width=10, height=1,font=("default", 12))
-logbox03.grid(row=13, column=2, columnspan=1, padx=5, pady=5, sticky='W')
+logbox03.grid(row=15, column=0, columnspan=1, padx=5, pady=5, sticky='W')
+
+logbox04 = Text(root, width=10, height=1,font=("default", 12))
+logbox04.grid(row=13, column=2, columnspan=1, padx=5, pady=5, sticky='W')
 
 # Time
 GPSTime_box = Text(root, width=25, height=1,font=("default", 12))
