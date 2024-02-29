@@ -4,8 +4,8 @@ import glob
 import os
 from scipy.signal import butter, filtfilt
 
-latColumn = 'ICM_az'  # name of column containing lateral acceleration
-longColumn = 'ICM_ay'  # name of column containing longitudinal acceleration
+time_column = 'Time'  # name of column containing time
+adxl_z_column = 'ADXL_z'  # name of column containing ADXL z-axis data
 max_frequency = 5  # Maximum frequency in Hz
 sampling_frequency = 20  # Sampling frequency in Hz
 
@@ -13,9 +13,12 @@ sampling_frequency = 20  # Sampling frequency in Hz
 current_dir = os.path.dirname(os.path.abspath(__file__))
 csv_files = glob.glob(f"{current_dir}/*.csv")
 
-# Lists to store filtered lateral and longitudinal acceleration data
-all_filtered_lateral_g = []
-all_filtered_longitudinal_g = []
+# Lists to store filtered ADXL_z data and other samples
+all_filtered_adxl_z_data = []
+all_sample_data = []
+
+# Initialize time_data outside the loop
+time_data = None
 
 # Process each CSV file in the folder
 for file_path in csv_files:
@@ -26,37 +29,49 @@ for file_path in csv_files:
         data = pd.read_csv(file_path)
 
         # Check if the required columns are present
-        if latColumn not in data.columns or longColumn not in data.columns:
+        if time_column not in data.columns or adxl_z_column not in data.columns:
             raise ValueError("Required columns not found")
 
-        # Assuming your columns are named 'LateralG' and 'LongitudinalG'
-        lateral_g = data[latColumn]
-        longitudinal_g = data[longColumn]
+        # Extract time and ADXL_z data
+        if time_data is None:
+            time_data = data[time_column]  # Initialize time_data if not already initialized
+        adxl_z_data = data[adxl_z_column]
 
         # Design a low-pass Butterworth filter with a cutoff frequency of max_frequency Hz
         nyquist = 0.5 * sampling_frequency
         cutoff_frequency = max_frequency / nyquist
         b, a = butter(4, cutoff_frequency, btype='low', analog=False)
 
-        # Apply the filter to lateral and longitudinal acceleration data
-        filtered_lateral_g = filtfilt(b, a, lateral_g)
-        filtered_longitudinal_g = filtfilt(b, a, longitudinal_g)
+        # Apply the filter to ADXL_z data
+        filtered_adxl_z_data = filtfilt(b, a, adxl_z_data)
 
-        # Store the filtered data
-        all_filtered_lateral_g.extend(filtered_lateral_g)
-        all_filtered_longitudinal_g.extend(filtered_longitudinal_g)
+        # Store the filtered ADXL_z data
+        all_filtered_adxl_z_data.append(filtered_adxl_z_data)
+
+        # Extract and store sample data
+        for i in range(1, 11):  # Assuming samples are named sample1, sample2, ..., sample10
+            sample_column = f'sample{i}'
+            if sample_column in data.columns:
+                all_sample_data.append(data[sample_column])
 
     except Exception as e:
         print(f"Ignoring file due to error: {e}")  # Log the error and continue to the next file
 
-# Create the filtered g-g diagram for all files
-plt.figure(figsize=(8, 6))
-plt.scatter(all_filtered_lateral_g, all_filtered_longitudinal_g, alpha=0.5)  # Plot filtered data points
-plt.title('Filtered g-g Diagram for All Files (Max Frequency: 5Hz)')
-plt.xlabel('Lateral Acceleration (g)')
-plt.ylabel('Longitudinal Acceleration (g)')
+# Create the plot for filtered ADXL_z data and sample data
+plt.figure(figsize=(10, 6))
+
+# Plot filtered ADXL_z data
+plt.plot(time_data, all_filtered_adxl_z_data, label='Filtered ADXL_z', color='blue')
+
+# Plot sample data
+for i, sample_data in enumerate(all_sample_data, start=1):
+    plt.plot(time_data, sample_data, label=f'Sample {i}', alpha=0.7)
+
+plt.title('Filtered ADXL_z and Sample Data')
+plt.xlabel('Time')
+plt.ylabel('Data')
+plt.legend()
 plt.grid(True)
-plt.axis('equal')  # Ensures equal scaling on both axes
 
 # Show the plot
 plt.show()
