@@ -9,6 +9,9 @@ adxl_z_column = 'ADXL1_z'  # name of column containing ADXL1 z-axis data
 max_frequency = 5  # Maximum frequency in Hz
 sampling_frequency = 20  # Sampling frequency in Hz
 
+# Define custom bin ranges for the histogram
+bin_ranges = np.linspace(-6, 6, 51)  # Example: from -2 to 2 with 51 bins
+
 # Get the directory of the current script
 current_dir = os.path.dirname(os.path.abspath(__file__))
 csv_files = glob.glob(f"{current_dir}/*.csv")
@@ -48,9 +51,9 @@ for file_path in csv_files:
 # Convert the list of filtered ADXL1_z data arrays into a single array
 all_filtered_adxl_z_data = np.array(all_filtered_adxl_z_data)
 
-# Create a histogram for all filtered ADXL1_z data
+# Create a histogram for all filtered ADXL1_z data with custom bin ranges
 plt.figure(figsize=(8, 6))
-plt.hist(all_filtered_adxl_z_data, bins=50, color='blue', alpha=0.7)
+plt.hist(all_filtered_adxl_z_data, bins=bin_ranges, color='blue', alpha=0.7)
 plt.title(f'Histogram of 5Hz Filtered {adxl_z_column} (Combined)')
 plt.xlabel(adxl_z_column)
 plt.ylabel('Frequency')
