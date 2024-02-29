@@ -85,7 +85,7 @@ float throttlePos = 999;
 float rpm = 999;
 
 bool useLC = true, useGPS = true, useGYS = true;
-bool useOBD= false, useICM = false;
+bool useOBD= false, useICM = true;
 
 void setup()
 {
@@ -231,7 +231,7 @@ bool setupLoadCell()
   {
     Serial.print("LC scale factor loaded from EEPROM: ");
     Serial.println(LC_scaleValue);
-    if (LC_scaleValue < 200 || LC_scaleValue > 400)
+    if (LC_scaleValue < 2000 || LC_scaleValue > 4000)
     {
       Serial.println("ERROR: LC Calibration factor out of range");
       return false;
@@ -462,7 +462,7 @@ void config()
 
     if (str.startsWith("<LC10kg>")) // 10kg calibration
     {
-      scale.calibrate_scale(980, 5);
+      scale.calibrate_scale(98, 5);
       LC_scaleValue = scale.get_scale();
       Serial.print("Calibration done at 10kg, scale value: ");
       Serial.println(LC_scaleValue);
