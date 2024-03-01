@@ -20,7 +20,7 @@ def calculate_acceleration(ground_speed):
     return acceleration
 
 # Function to apply Butterworth low-pass filter
-def apply_filter(signal, sampling_frequency=20, cutoff_frequency=5):
+def apply_filter(signal, sampling_frequency=20, cutoff_frequency=2):
     nyquist = 0.5 * sampling_frequency
     normalized_cutoff_frequency = cutoff_frequency / nyquist
     b, a = butter(4, normalized_cutoff_frequency, btype='low', analog=False)
