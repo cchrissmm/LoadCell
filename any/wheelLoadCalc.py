@@ -44,7 +44,7 @@ def calculate_F_lateral(row):
 def calculate_F_longitudinal(row):
     return row[ax_chassis] * Fstatic * (1 / Cx)
 
-def calculate_F_chassis_vertical(row, Flat, Flong):
+def calculate_F_chassis_vertical(row, Flat, Flong):  # Adjusted to accept Flat and Flong as arguments
     return Flat + Flong + Fstatic
 
 def calculate_F_road_lateral(row):
@@ -56,7 +56,16 @@ def calculate_F_road_longitudinal(row):
 def calculate_F_road_vertical(row):
     return mUnsprung * (row[az_wheel] - row[az_chassis])
 
-#create 
+def calculate_F_Tyre_vertical(row):
+    return calculate_F_chassis_vertical(row, row['Flat'], row['Flong']) + calculate_F_road_vertical(row)
+
+def calculate_F_Tyre_lateral(row):
+    return calculate_F_lateral(row) + calculate_F_road_lateral(row)
+
+def calculate_F_Tyre_longitudinal(row):
+    return calculate_F_longitudinal(row) + calculate_F_road_longitudinal(row)
+
+
 # Create new columns for calculated forces
 df['Flat'] = df.apply(calculate_F_lateral, axis=1)
 df['Flong'] = df.apply(calculate_F_longitudinal, axis=1)
@@ -64,18 +73,39 @@ df['FchassisVert'] = df.apply(lambda row: calculate_F_chassis_vertical(row, row[
 df['Froadlat'] = df.apply(calculate_F_road_lateral, axis=1)
 df['Froadlong'] = df.apply(calculate_F_road_longitudinal, axis=1)
 df['Froadvert'] = df.apply(calculate_F_road_vertical, axis=1)
+df['FtyreVert'] = df.apply(calculate_F_Tyre_vertical, axis=1)
+df['FtyreLat'] = df.apply(calculate_F_Tyre_lateral, axis=1)
+df['FtyreLong'] = df.apply(calculate_F_Tyre_longitudinal, axis=1)
 
+    
 # Plot the calculated forces
 plt.figure(figsize=(10, 6))
 
-plt.plot(df['Froadlat'], label='Froadlat')
-plt.plot(df['Froadlong'], label='Froadlong')
-plt.plot(df['Froadvert'], label='Froadvert')
-plt.plot(df[az_chassis], label='az chassis')
+plt.hist(df['FtyreLat'], bins=50, alpha=0.5, label='Ftyrelat')
+plt.hist(df['FtyreLong'], bins=50, alpha=0.5, label='Ftyrelong')
+plt.hist(df['FtyreVert'], bins=50, alpha=0.5, label='Ftyrevert')
+#plt.hist(df['ICM_az'], bins=50, alpha=0.5, label='az_chassis')
 
-plt.xlabel('Time')
-plt.ylabel('Force')
-plt.title('Forces vs. Time')
+plt.xlabel('Force')
+plt.ylabel('Frequency')
+plt.title('Histogram of Forces and Acceleration')
 plt.legend()
+
+# Plot 2: Calculation Results
+plt.figure(figsize=(10, 6))
+
+plt.plot(df.index, df['Flat'], label='Flat')
+plt.plot(df.index, df['Flong'], label='Flong')
+plt.plot(df.index, df['FchassisVert'], label='FchassisVert')
+plt.plot(df.index, df['Froadlat'], label='Froadlat')
+plt.plot(df.index, df['Froadlong'], label='Froadlong')
+plt.plot(df.index, df['Froadvert'], label='Froadvert')
+plt.plot(df.index, df['ICM_az'], label='az_chassis')
+plt.xlabel('Index')
+plt.ylabel('Value')
+plt.title('Calculation Results')
+plt.legend()
+
+plt.tight_layout()
 
 plt.show()
