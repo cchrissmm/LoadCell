@@ -41,7 +41,7 @@ ADXL345 adxl_2 = ADXL345(0x1D, I2Ctwo);
 #endif
 ICM_20948_I2C ICM; // I2C 0x68
 
-long timeNow, timeAtBoot = 0;
+long timeAtBoot = 0;
 long GPS_lat, GPS_long = 9999;
 float GPS_groundSpeed = 9999;
 float GPS_heading = 9999; // degrees
@@ -157,7 +157,7 @@ void loop()
       counter = 0;
     }
 
-    timeNow = millis() - timeAtBoot;
+    float timeNow = (millis() - timeAtBoot) *0.001; //convert to ms
 
     Serial.print("DATA");
     Serial.print(timeNow); // 0
@@ -632,9 +632,9 @@ void logICM()
   {
     ICM.getAGMT(); // The values are only updated when you call 'getAGMT'
 
-    ICM_aX = round(ICM.accX() * 0.001 * 10) / 10;
-    ICM_aY = round(ICM.accY() * 0.001 * 10) / 10;
-    ICM_aZ = round(ICM.accZ() * 0.001 * 10) / 10;
+    ICM_aX = round(ICM.accX() * 0.01 * 10) / 10;
+    ICM_aY = round(ICM.accY() * 0.01 * 10) / 10;
+    ICM_aZ = round(ICM.accZ() * 0.01 * 10) / 10;
 
     ICM_gX = ICM.gyrX();
     ICM_gY = ICM.gyrY();

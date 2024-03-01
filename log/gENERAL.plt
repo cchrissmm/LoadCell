@@ -18,7 +18,7 @@ GPS_Accel_x  nobit 3 unit= scmin=-63.3217 scmax=82.647
 ~ ADXL2_z  nobit 7 unit=-10.72 scmin=-9999 scmax=16998.3
 LC_Force  nobit 2 unit=-0.68 scmin=-771.413 scmax=1154.15
 ~ ICM_ax  nobit 2 unit=-1000.98 scmin=-3.58 scmax=7.49
-~ ICM_ay  nobit 3 unit=0.00 scmin=-6.64 scmax=12.8
+ICM_ay  nobit 3 unit=0.00 scmin=-6.64 scmax=12.8
 ICM_az  nobit 1 unit=9999.00 scmin=-3.54974 scmax=13.4603
 ICM_azF  nobit 4 unit=9999.00 scmin=-3.54974 scmax=13.4603
 GPS_Accel_xF  nobit 1 unit= scansc
