@@ -5,8 +5,8 @@ from scipy.signal import butter, filtfilt
 
 # Constants and variable mappings
 ag = 9.81  # Acceleration due to gravity in m/s^2
-Fstatic = 950 * ag  # Static force in N
-mUnsprung = 50  # Unsprung mass in kg
+Fstatic = 910 * ag  # Static force in N
+mUnsprung = 40  # Unsprung mass in kg
 Cy = 9.81
 Cx = 6
 ay_chassis = 'ICM_ax' 
@@ -102,10 +102,14 @@ df['FtyreLong'] = df.apply(calculate_F_Tyre_longitudinal, axis=1)
 # Plot the calculated forces
 plt.figure(figsize=(10, 6))
 
-plt.hist(df['FtyreLat'], bins=50, alpha=0.5, label='Ftyrelat')
-plt.hist(df['FtyreLong'], bins=50, alpha=0.5, label='Ftyrelong')
-plt.hist(df['FtyreVert'], bins=50, alpha=0.5, label='Ftyrevert')
-#plt.hist(df['ICM_az'], bins=50, alpha=0.5, label='az_chassis')
+counts, bins, patches = plt.hist(df['FtyreLat'], bins=50, alpha=0.5, label='Ftyrelat')
+plt.plot(bins[:-1], counts, linestyle='-', color='black')
+
+counts, bins, patches = plt.hist(df['FtyreLong'], bins=50, alpha=0.5, label='Ftyrelong')
+plt.plot(bins[:-1], counts, linestyle='-', color='red')
+
+counts, bins, patches = plt.hist(df['FtyreVert'], bins=50, alpha=0.5, label='Ftyrevert')
+plt.plot(bins[:-1], counts, linestyle='-', color='blue')
 
 plt.xlabel('Force')
 plt.ylabel('Frequency')
