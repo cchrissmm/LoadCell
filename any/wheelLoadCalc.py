@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
+from scipy.signal import butter, filtfilt
 
 # Constants and variable mappings
 ag = 9.81  # Acceleration due to gravity in m/s^2
@@ -21,6 +22,18 @@ current_dir = os.path.dirname(os.path.realpath(__file__))
 # Find CSV files in the current directory
 csv_files = [file for file in os.listdir(current_dir) if file.endswith('.csv')]
 
+# Low-pass filter parameters
+cutoff_frequency = 10  # Hz
+order = 4
+
+# Function to apply Butterworth low-pass filter
+def apply_filter(signal, sampling_frequency=20, cutoff_frequency=5):
+    nyquist = 0.5 * sampling_frequency
+    normalized_cutoff_frequency = cutoff_frequency / nyquist
+    b, a = butter(4, normalized_cutoff_frequency, btype='low', analog=False)
+    filtered_signal = filtfilt(b, a, signal)
+    return filtered_signal
+
 # Read the first CSV file found into a DataFrame
 if csv_files:
     csv_file = os.path.join(current_dir, csv_files[0])
@@ -28,6 +41,14 @@ if csv_files:
 else:
     print("No CSV files found in the directory.")
     exit()
+
+# Low-pass filter the acceleration signals
+df[ax_chassis] = apply_filter(df[ax_chassis])
+df[ay_chassis] = apply_filter(df[ay_chassis])
+df[az_chassis] = apply_filter(df[az_chassis])
+df[ax_wheel] = apply_filter(df[ax_wheel])
+df[ay_wheel] = apply_filter(df[ay_wheel])
+df[az_wheel] = apply_filter(df[az_wheel])
 
 # Align the axes of the acceleration sensors with the global axes
 df[ax_chassis] *= 10
