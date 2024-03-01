@@ -25,7 +25,7 @@ current_directory = os.path.dirname(os.path.abspath(__file__))
 for file_name in os.listdir(current_directory):
     if file_name.endswith(".csv"):
         file_path = os.path.join(current_directory, file_name)
-        output_file_path = os.path.join(current_directory, os.path.splitext(file_name)[0] + "_output.csv")
+        output_file_path = os.path.join(current_directory, os.path.splitext(file_name)[0] + "_accel.csv")
 
         # Read the CSV file
         data = pd.read_csv(file_path)
