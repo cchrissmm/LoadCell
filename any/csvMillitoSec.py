@@ -16,7 +16,7 @@ csv_files = [file for file in os.listdir(current_dir) if file.endswith(".csv")]
 # Process each CSV file in the directory
 for input_csv_file in csv_files:
     input_csv_path = os.path.join(current_dir, input_csv_file)
-    output_csv_path = os.path.join(current_dir, os.path.splitext(input_csv_file)[0] + "_sec.csv")
+    output_csv_path = os.path.join(current_dir, os.path.splitext(input_csv_file)[0] + "_secCorr.csv")
 
     # Read the CSV file into a DataFrame
     data = pd.read_csv(input_csv_path)
