@@ -110,14 +110,17 @@ combined_df['FtyreLong'] = combined_df.apply(calculate_F_Tyre_longitudinal, axis
 # Plot the combined data
 plt.figure(figsize=(10, 6))
 
-counts, bins, patches = plt.hist(combined_df['FtyreLat'], bins=50, alpha=0.5, label='Ftyrelat')
-plt.plot(bins[:-1], counts, linestyle='-', color='black')
+# Histogram of FtyreLat
+counts_lat, bins_lat, _ = plt.hist(combined_df['FtyreLat'], bins=100, alpha=0.5, label='Ftyrelat', color='black')
+plt.plot((bins_lat[:-1] + bins_lat[1:]) / 2, counts_lat, linestyle='-', color='black')
 
-counts, bins, patches = plt.hist(combined_df['FtyreLong'], bins=50, alpha=0.5, label='Ftyrelong')
-plt.plot(bins[:-1], counts, linestyle='-', color='red')
+# Histogram of FtyreLong
+counts_long, bins_long, _ = plt.hist(combined_df['FtyreLong'], bins=100, alpha=0.5, label='Ftyrelong', color='red')
+plt.plot((bins_long[:-1] + bins_long[1:]) / 2, counts_long, linestyle='-', color='red')
 
-counts, bins, patches = plt.hist(combined_df['FtyreVert'], bins=50, alpha=0.5, label='Ftyrevert')
-plt.plot(bins[:-1], counts, linestyle='-', color='blue')
+# Histogram of FtyreVert
+counts_vert, bins_vert, _ = plt.hist(combined_df['FtyreVert'], bins=100, alpha=0.5, label='Ftyrevert', color='blue')
+plt.plot((bins_vert[:-1] + bins_vert[1:]) / 2, counts_vert, linestyle='-', color='blue')
 
 # Calculate 99.5 percentile
 percentile_995 = combined_df['FtyreLat'].quantile(0.995)
