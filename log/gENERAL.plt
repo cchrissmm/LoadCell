@@ -2,11 +2,12 @@ GPS_Day  bit 1 unit=26 scmin=-46.4 scmax=31.9
 GPS_Hours  bit 8 unit=23 scmin=-2.7 scmax=5.4
 GPS_Minutes  bit 1 unit=2 scmin=-28.6 scmax=30.8
 GPS_Month  bit 2 unit=1 scmin=-1.4 scmax=4
-GPS_Seconds  nobit 4 unit=42 scmin=-973.5 scmax=778.8
+GPS_Seconds  nobit 4 unit=42 scmin=-1268.09 scmax=78.8961
 GPS_groundSpeed  nobit 5 unit=0.00 scmin=-237.048 scmax=144.193
 GPS_groundSpeed  bit 1 key=GPS_groundSpeed_m_s unit=44.02 scmin=-46.9469 scmax=39.3357
 + exp=x*(1/3.6)
-ADXL1_x  nobit 2 unit=-16.78 scmin=-317.685 scmax=15.954
+GPS_groundSpeed  nobit 1 unit=79.29 scansc
+ADXL1_x  nobit 2 unit=-16.78 scmin=-201.637 scmax=132.002
 ADXL1_y  nobit 3 unit=0.53 scmin=-1801.08 scmax=198.889
 ADXL1_z  nobit 4 unit=-4.07 scmin=-383.882 scmax=56.326
 ~ ADXL2_x  nobit 5 unit=-4.91 scmin=-24.2 scmax=5.5
@@ -22,6 +23,7 @@ ICM_az  nobit 4 unit=9999.00 scmin=-4.08 scmax=12.93
 ICM_gx  nobit 5 unit=0.00 scmin=-72.965 scmax=281.464
 ICM_gy  nobit 6 unit=0.00 scmin=-122.486 scmax=608.377
 ICM_gz  nobit 7 unit=9999.00 scmin=-73.954 scmax=494.882
+Acceleration  nobit 1 unit=- scmin=0 scmax=0
 ICM_mx  nobit 8 unit=0.00 scmin=-49.95 scmax=399.6
 ICM_my  nobit 1 unit=0.00 scmin=8.685 scmax=227.79
 ICM_mz  nobit 2 unit=9999.00 scmin=-84.75 scmax=332.4
