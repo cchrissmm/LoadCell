@@ -29,6 +29,7 @@ ELM327 myELM327;
 #define ADXL_RANGE 16 // 2,4,8,16
 
 #define SECONDADXL false
+#define IGNORE_ERRORS false
 
 TwoWire I2Cone = TwoWire(0); // GPS I2C bus
 TwoWire I2Ctwo = TwoWire(1); // ADXL I2C bus
@@ -129,13 +130,15 @@ void setup()
     Serial.println("Setup completed with no errors............................................");
   else
     Serial.println("ERROR Setup completed with errors............................................");
+    if(IGNORE_ERRORS) 
+      Serial.println("Ignore Errors is set so starting anyway");
 }
 
 void loop()
 {
   config();
 
-  if (systemErrorState == 1)
+  if (systemErrorState == 1 && !IGNORE_ERRORS)
   {
     // Serial.println("ERROR system error");
     // vTaskDelay(10000 / portTICK_PERIOD_MS);
@@ -157,7 +160,7 @@ void loop()
       counter = 0;
     }
 
-    float timeNow = (millis() - timeAtBoot) *0.001; //convert to ms
+    float timeNow = (millis() - timeAtBoot) *0.001; //convert to s
 
     Serial.print("DATA");
     Serial.print(timeNow); // 0
