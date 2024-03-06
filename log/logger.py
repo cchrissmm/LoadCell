@@ -74,6 +74,15 @@ if config.has_section('LogBoxes'):
     logbox_name04 = config.get('LogBoxes', 'LOGBOXNAME04')
     logbox_index04 = config.getint('LogBoxes', 'LOGBOXINDEX04')
     
+    logbox_name05 = config.get('LogBoxes', 'LOGBOXNAME05')
+    logbox_index05 = config.getint('LogBoxes', 'LOGBOXINDEX05')
+    
+    logbox_name06 = config.get('LogBoxes', 'LOGBOXNAME06')
+    logbox_index06 = config.getint('LogBoxes', 'LOGBOXINDEX06')
+    
+    logbox_name07 = config.get('LogBoxes', 'LOGBOXNAME07')
+    logbox_index07 = config.getint('LogBoxes', 'LOGBOXINDEX07')
+    
 else:
     print("LogBoxes section does not exist in settings.ini")
     
@@ -233,6 +242,15 @@ def read_serial():
                 
                 logbox04.delete(1.0, END)
                 logbox04.insert(END, logbox_name04 + ": " + str(data_line[logbox_index04]))  # Index 2 corresponds to the third column
+                
+                logbox05.delete(1.0, END)
+                logbox05.insert(END, logbox_name05 + ": " + str(data_line[logbox_index05]))  # Index 2 corresponds to the third column
+                
+                logbox06.delete(1.0, END)
+                logbox06.insert(END, logbox_name06 + ": " + str(data_line[logbox_index06]))  # Index 2 corresponds to the third column
+                
+                logbox07.delete(1.0, END)
+                logbox07.insert(END, logbox_name07 + ": " + str(data_line[logbox_index07]))  # Index 2 corresponds to the third column
                 
                 counter += 1
                 if counter >= 60:
@@ -447,16 +465,23 @@ live_data3_box.grid(row=11, column=4, columnspan=2, padx=5, pady=5, sticky='W')
 logbox01 = Text(root, width=10, height=1,font=("default", 12))
 logbox01.grid(row=13, column=0, columnspan=1, padx=5, pady=5, sticky='W')
 
-
 logbox02 = Text(root, width=10, height=1,font=("default", 12))
 logbox02.grid(row=14, column=0, columnspan=1, padx=5, pady=5, sticky='W')
-
 
 logbox03 = Text(root, width=10, height=1,font=("default", 12))
 logbox03.grid(row=15, column=0, columnspan=1, padx=5, pady=5, sticky='W')
 
 logbox04 = Text(root, width=10, height=1,font=("default", 12))
-logbox04.grid(row=13, column=2, columnspan=1, padx=5, pady=5, sticky='W')
+logbox04.grid(row=16, column=0, columnspan=1, padx=5, pady=5, sticky='W')
+
+logbox05 = Text(root, width=10, height=1,font=("default", 12))
+logbox05.grid(row=13, column=1, columnspan=1, padx=5, pady=5, sticky='W')
+
+logbox06 = Text(root, width=10, height=1,font=("default", 12))
+logbox06.grid(row=14, column=1, columnspan=1, padx=5, pady=5, sticky='W')
+
+logbox07 = Text(root, width=10, height=1,font=("default", 12))
+logbox07.grid(row=15, column=1, columnspan=1, padx=5, pady=5, sticky='W')
 
 # Time
 GPSTime_box = Text(root, width=25, height=1,font=("default", 12))
