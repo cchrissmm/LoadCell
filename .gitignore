@@ -5,6 +5,7 @@
 .vscode/ipch
 *.csv
 *.d97
+*.png
 temp_data.txt
 .vscode/extensions.json
 log/build
