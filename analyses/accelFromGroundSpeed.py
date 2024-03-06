@@ -9,7 +9,7 @@ def kph_to_mps(speed_kph):
 # Function to calculate acceleration
 def calculate_acceleration(ground_speed):
     # Calculate delta time (assuming time intervals are constant)
-    delta_time = (ground_speed['time'].diff()).fillna(0)  # Convert milliseconds to seconds
+    delta_time = (ground_speed['time'].diff()).fillna(0)  
 
     # Calculate delta speed (convert km/h to m/s)
     delta_speed = (kph_to_mps(ground_speed['GPS_groundSpeed']) - kph_to_mps(ground_speed['GPS_groundSpeed'].shift(1))).fillna(0)
