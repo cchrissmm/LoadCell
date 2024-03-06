@@ -60,42 +60,44 @@ sampling_interval = 1 / 20  # Sampling interval in seconds, based on a sampling 
 df['filtered_acceleration'] = pt1_filter(df['acceleration'].to_numpy(), time_constant, sampling_interval)
 
 # Plotting
-fig, ax1 = plt.subplots(figsize=(10, 8))
+fig, ax1 = plt.subplots(figsize=(6, 5))
+
+line_width = 0.5  # Set line width
 
 color = 'tab:red'
 ax1.set_xlabel('Time (s)')
 ax1.set_ylabel('GPS_Groundspeed (km/h)', color=color)
-ax1.plot(df['time'], df['GPS_groundSpeed'], color=color)
+ax1.plot(df['time'], df['GPS_groundSpeed'], color=color, linewidth=line_width)
 ax1.tick_params(axis='y', labelcolor=color)
 ax1.fill_between(df['time'], df['GPS_groundSpeed'], where=df['condition'], color='red', alpha=0.3)
 
 ax2 = ax1.twinx()
 color = 'tab:blue'
-ax2.set_ylabel('LC_Force', color=color)
-ax2.plot(df['time'], df['LC_Force'], color=color)
+ax2.set_ylabel('Pedal Force', color=color)
+ax2.plot(df['time'], df['LC_Force'], color=color, linewidth=line_width)
 ax2.tick_params(axis='y', labelcolor=color)
 ax2.fill_between(df['time'], df['LC_Force'], where=df['condition'], color='blue', alpha=0.3)
 
 ax3 = ax1.twinx()
 ax3.spines["right"].set_position(("axes", 1.2))
 color = 'tab:green'
-ax3.set_ylabel('GPS_Heading', color=color)
-ax3.plot(df['time'], df['GPS_heading'], color=color)
+ax3.set_ylabel('GPS_Heading (Deg)', color=color)
+ax3.plot(df['time'], df['GPS_heading'], color=color, linewidth=line_width)
 ax3.tick_params(axis='y', labelcolor=color)
 
 ax4 = ax1.twinx()
 ax4.spines["right"].set_position(("axes", 1.4))  # Adjust position as needed
 color = 'tab:purple'
-ax4.set_ylabel('Filtered Acceleration (m/s^2)', color=color)
-ax4.plot(df['time'], df['filtered_acceleration'], color=color, linestyle='--')
+ax4.set_ylabel('Acceleration (m/s^2)', color=color)
+ax4.plot(df['time'], df['filtered_acceleration'], color=color, linestyle='--', linewidth=line_width)
 ax4.tick_params(axis='y', labelcolor=color)
 
 fig.tight_layout()
 plt.subplots_adjust(bottom=0.2, top=0.9)  # Adjust bottom margin
-metrics_text = f"Maximum LC_Force: {max_lc_force} N\nAverage Deceleration: {average_deceleration} m/s^2\n" \
+metrics_text = f"Maximum Pedal Force: {max_lc_force} N\nAverage Deceleration: {average_deceleration} m/s^2\n" \
                f"GPS_Heading Range: {gps_heading_range} Deg\n" \
                f"GPS_Groundspeed at maneuver begin: {gps_groundspeed_before_transition} km/h"
-plt.figtext(0.5, 0.01, metrics_text, ha="center", fontsize=10, bbox={"facecolor": "orange", "alpha": 0.5, "pad": 5})
+plt.figtext(0.5, 0.01, metrics_text, ha="left", fontsize=8)
 
 plt.title('Analyses of ' + first_csv)
 plt.show()
