@@ -84,11 +84,17 @@ for first_csv in csv_files:
             print(f"Start time: {start_time}, Stop time: {stop_time}")
             break  # Break the loop after the first iteration
             
-    
+    # Initialize df_window to df before the loop
+    df_window = df
+
     # Plot only the identified time ranges
     for start, end in plot_ranges:
-        # Filter the DataFrame for the current time window
-        df_window = df[(df['time'] >= start) & (df['time'] <= end)]
+        try:
+            # Filter the DataFrame for the current time window
+            df_window = df[(df['time'] >= start) & (df['time'] <= end)]
+        except Exception as e:
+            print(f"An error occurred: {e}. Plotting the entire time range.")
+            df_window = df  # Use the entire DataFrame
         
     fig, ax1 = plt.subplots(figsize=(6, 5))
 
