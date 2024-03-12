@@ -32,6 +32,13 @@ for first_csv in csv_files:
     df['acceleration'] = df['delta_speed'] / df['delta_time']  # Assuming positive values indicate acceleration
     df['acceleration'].fillna(0, inplace=True)
     df['condition'] = (df['LC_Force'] > 30) & (df['GPS_groundSpeed_m_s'] > 2/3.6)  # For highlighting in plot
+    
+    # Identify start and stop points of the condition
+    # Fill NaN values before performing logical operations
+    df['condition_shifted'] = df['condition'].shift(1).fillna(False)
+    condition_starts = df['condition'] & ~df['condition_shifted']
+    condition_stops = ~df['condition'] & df['condition'].shift(1)
+    plot_ranges = []
 
     # Calculate Average Deceleration in the filtered range
     average_deceleration = round(df.loc[df['condition'], 'acceleration'].mean(), 2)
@@ -60,7 +67,29 @@ for first_csv in csv_files:
     sampling_interval = 1 / 20  # Sampling interval in seconds, based on a sampling rate of 20Hz
     df['filtered_acceleration'] = pt1_filter(df['acceleration'].to_numpy(), time_constant, sampling_interval)
 
-    # Plotting
+    # Iterate over each start condition index
+    for start_index in df[condition_starts].index:
+        # Assuming 'time' column exists and is in suitable format
+        start_time = df.at[start_index, 'time']
+        
+        # Find the next stop condition that comes after the current start
+        stop_indices = df.index[(df.index > start_index) & condition_stops]
+        if not stop_indices.empty:
+            stop_index = stop_indices[0]
+            stop_time = df.at[stop_index, 'time']
+            
+            # Add the start and stop times, adjusted by 3 seconds before and after, to the list
+            plot_ranges.append((max(start_time - 3, df['time'].min()), min(stop_time + 3, df['time'].max())))
+            #print the calculated start and stop times
+            print(f"Start time: {start_time}, Stop time: {stop_time}")
+            break  # Break the loop after the first iteration
+            
+    
+    # Plot only the identified time ranges
+    for start, end in plot_ranges:
+        # Filter the DataFrame for the current time window
+        df_window = df[(df['time'] >= start) & (df['time'] <= end)]
+        
     fig, ax1 = plt.subplots(figsize=(6, 5))
 
     line_width = 0.5  # Set line width
@@ -68,29 +97,29 @@ for first_csv in csv_files:
     color = 'tab:red'
     ax1.set_xlabel('Time (s)')
     ax1.set_ylabel('GPS_Groundspeed (km/h)', color=color)
-    ax1.plot(df['time'], df['GPS_groundSpeed'], color=color, linewidth=line_width)
+    ax1.plot(df_window['time'], df_window['GPS_groundSpeed'], color=color, linewidth=line_width)
     ax1.tick_params(axis='y', labelcolor=color)
-    ax1.fill_between(df['time'], df['GPS_groundSpeed'], where=df['condition'], color='red', alpha=0.3)
+    ax1.fill_between(df_window['time'], df_window['GPS_groundSpeed'], where=df_window['condition'], color='red', alpha=0.3)
 
     ax2 = ax1.twinx()
     color = 'tab:blue'
     ax2.set_ylabel('Pedal Force', color=color)
-    ax2.plot(df['time'], df['LC_Force'], color=color, linewidth=line_width)
+    ax2.plot(df_window['time'], df_window['LC_Force'], color=color, linewidth=line_width)
     ax2.tick_params(axis='y', labelcolor=color)
-    ax2.fill_between(df['time'], df['LC_Force'], where=df['condition'], color='blue', alpha=0.3)
+    #ax2.fill_between(df['time'], df['LC_Force'], where=df['condition'], color='blue', alpha=0.3)
 
     ax3 = ax1.twinx()
     ax3.spines["right"].set_position(("axes", 1.2))
     color = 'tab:green'
     ax3.set_ylabel('GPS_Heading (Deg)', color=color)
-    ax3.plot(df['time'], df['GPS_heading'], color=color, linewidth=line_width)
+    ax3.plot(df_window['time'], df_window['GPS_heading'], color=color, linewidth=line_width)
     ax3.tick_params(axis='y', labelcolor=color)
 
     ax4 = ax1.twinx()
     ax4.spines["right"].set_position(("axes", 1.4))  # Adjust position as needed
     color = 'tab:purple'
     ax4.set_ylabel('Acceleration (m/s^2)', color=color)
-    ax4.plot(df['time'], df['filtered_acceleration'], color=color, linestyle='--', linewidth=line_width)
+    ax4.plot(df_window['time'], df_window['filtered_acceleration'], color=color, linestyle='--', linewidth=line_width)
     ax4.tick_params(axis='y', labelcolor=color)
 
     fig.tight_layout()
