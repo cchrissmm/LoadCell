@@ -90,8 +90,8 @@ for first_csv in csv_files:
             stop_index = stop_indices[0]
             stop_time = df.at[stop_index, 'time']
             
-            # Add the start and stop times, adjusted by 3 seconds before and after, to the list
-            plot_ranges.append((max(start_time - 3, df['time'].min()), min(stop_time + 3, df['time'].max())))
+            # Add the start and stop times, adjusted by 2 seconds before and after, to the list
+            plot_ranges.append((max(start_time - 2, df['time'].min()), min(stop_time + 2, df['time'].max())))
             #print the calculated start and stop times
             print(f"Start time: {start_time}, Stop time: {stop_time}")
             break  # Break the loop after the first iteration
@@ -118,7 +118,7 @@ for first_csv in csv_files:
     ax1.plot(df_window['time'], df_window['GPS_groundSpeed'], color=color, linewidth=line_width)
     ax1.tick_params(axis='y', labelcolor=color)
     ax1.fill_between(df_window['time'], df_window['GPS_groundSpeed'], where=df_window['condition'], color='red', alpha=0.3)
-
+    
     ax2 = ax1.twinx()
     color = 'tab:blue'
     ax2.set_ylabel('Pedal Force', color=color)
@@ -142,18 +142,21 @@ for first_csv in csv_files:
 
     fig.tight_layout()
     
-    plt.subplots_adjust(bottom=0.2, top=0.9)  # Adjust bottom margin
+    plt.subplots_adjust(bottom=0.22, top=0.9)  # Adjust bottom margin
     # Now you can use local_time in your f-string
     metrics_text = f"""Maximum Pedal Force: {max_lc_force} N
     Average Deceleration: {average_deceleration} m/s^2
-    GPS_Heading Range: {gps_heading_range} Deg
     GPS_Groundspeed at maneuver begin: {gps_groundspeed_before_transition} km/h
-    Date (Local): {local_time.day} of {local_time.month}
+    Date (Local): {local_time.day} / {local_time.month}
     Time (Local): {local_time.hour}:{local_time.minute}"""
                 
     plt.figtext(0.01, 0.01, metrics_text, ha="left", fontsize=8)
+    
+    # Add a footer
+    footer_text = "Relativity Engineering Group DAQ1004"
+    plt.figtext(0.5, 0.01, footer_text, ha="center", fontsize=6)
 
-    plt.title('Analyses of ' + first_csv)
+    plt.title(first_csv)
     #plt.show()
      # Save the plot as a PNG file with the same base name as the CSV
     output_filename = os.path.splitext(first_csv)[0] + '.png'
