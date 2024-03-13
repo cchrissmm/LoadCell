@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import butter, filtfilt
+from datetime import datetime
+import pytz
 
 # Set the working directory to the script's directory
 script_dir = os.path.dirname(os.path.realpath(__file__))
@@ -20,6 +22,16 @@ for first_csv in csv_files:
 
     # Step 2: Read the CSV
     df = pd.read_csv(first_csv)
+    
+    # Create a datetime object with the GMT time
+    gmt_time = datetime(2024, df['GPS_Month'].iloc[0], df['GPS_Day'].iloc[0], 
+                    df['GPS_Hours'].iloc[0], df['GPS_Minutes'].iloc[0], df['GPS_Seconds'].iloc[0])
+
+# Set the timezone to GMT
+    gmt_time = pytz.timezone('GMT').localize(gmt_time)
+
+# Convert to GMT+11
+    local_time = gmt_time.astimezone(pytz.timezone('Etc/GMT-11'))
 
     # Step 3: Maximum value of LC_Force
     max_lc_force = df['LC_Force'].max()
@@ -131,9 +143,14 @@ for first_csv in csv_files:
     fig.tight_layout()
     
     plt.subplots_adjust(bottom=0.2, top=0.9)  # Adjust bottom margin
-    metrics_text = f"Maximum Pedal Force: {max_lc_force} N\nAverage Deceleration: {average_deceleration} m/s^2\n" \
-                f"GPS_Heading Range: {gps_heading_range} Deg\n" \
-                f"GPS_Groundspeed at maneuver begin: {gps_groundspeed_before_transition} km/h"
+    # Now you can use local_time in your f-string
+    metrics_text = f"""Maximum Pedal Force: {max_lc_force} N
+    Average Deceleration: {average_deceleration} m/s^2
+    GPS_Heading Range: {gps_heading_range} Deg
+    GPS_Groundspeed at maneuver begin: {gps_groundspeed_before_transition} km/h
+    Date (Local): {local_time.day} of {local_time.month}
+    Time (Local): {local_time.hour}:{local_time.minute}"""
+                
     plt.figtext(0.01, 0.01, metrics_text, ha="left", fontsize=8)
 
     plt.title('Analyses of ' + first_csv)
