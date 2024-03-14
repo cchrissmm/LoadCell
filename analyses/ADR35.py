@@ -118,12 +118,14 @@ for first_csv in csv_files:
     ax1.plot(df_window['time'], df_window['GPS_groundSpeed'], color=color, linewidth=line_width)
     ax1.tick_params(axis='y', labelcolor=color)
     ax1.fill_between(df_window['time'], df_window['GPS_groundSpeed'], where=df_window['condition'], color='red', alpha=0.3)
+    ax1.set_ylim(0, 110)
     
     ax2 = ax1.twinx()
     color = 'tab:blue'
     ax2.set_ylabel('Pedal Force', color=color)
     ax2.plot(df_window['time'], df_window['LC_Force'], color=color, linewidth=line_width)
     ax2.tick_params(axis='y', labelcolor=color)
+    ax2.set_ylim(0, 1000)
     #ax2.fill_between(df['time'], df['LC_Force'], where=df['condition'], color='blue', alpha=0.3)
 
     ax3 = ax1.twinx()
@@ -132,6 +134,7 @@ for first_csv in csv_files:
     ax3.set_ylabel('GPS_Heading (Deg)', color=color)
     ax3.plot(df_window['time'], df_window['GPS_heading'], color=color, linewidth=line_width)
     ax3.tick_params(axis='y', labelcolor=color)
+    ax3.set_ylim(0, 360)
 
     ax4 = ax1.twinx()
     ax4.spines["right"].set_position(("axes", 1.4))  # Adjust position as needed
@@ -139,7 +142,11 @@ for first_csv in csv_files:
     ax4.set_ylabel('Acceleration (m/s^2)', color=color)
     ax4.plot(df_window['time'], df_window['filtered_acceleration'], color=color, linestyle='--', linewidth=line_width)
     ax4.tick_params(axis='y', labelcolor=color)
+    ax4.set_ylim(-10, 2)
 
+    # Add a legend
+    #ax1.legend(loc='upper right')
+    
     fig.tight_layout()
     
     plt.subplots_adjust(bottom=0.22, top=0.9)  # Adjust bottom margin
