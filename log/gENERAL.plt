@@ -17,14 +17,11 @@ GPS_groundSpeed  nobit 7 key=GPS_groundSpeed_m_s unit=44.02 scmin=-62.5752 scmax
 ~ ADXL2_y  nobit 6 unit=3.18 scmin=-23.1 scmax=6.6
 ~ ADXL2_z  nobit 7 unit=-10.72 scmin=-9999 scmax=16998.3
 LC_Force  nobit 2 unit=-0.68 scmin=-771.413 scmax=1154.15
-~ ICM_ax  nobit 2 unit=-1000.98 scmin=-3.58 scmax=7.49
-ICM_ay  nobit 3 unit=0.00 scmin=-6.64 scmax=12.8
-ICM_az  nobit 1 unit=9999.00 scmin=-3.54974 scmax=13.4603
-ICM_azF  nobit 4 unit=9999.00 scmin=-3.54974 scmax=13.4603
-GPS_Accel_x  nobit 3 unit= scmin=-12.6559 scmax=69.0637
-GPS_Accel_xF  nobit 1 unit= scansc
+ICM_ax  nobit 2 key=Ay_Chassis_Lat unit=-1000.98 scmin=-105.361 scmax=32.8446
+ICM_ay  nobit 3 key=Az_Chassis unit=0.00 scmin=-136.187 scmax=70.8849
+ICM_az  nobit 1 key=Ax_Chassis_long unit=9999.00 scmin=-80.7358 scmax=90.6464
 ~ ICM_gx  nobit 5 unit=0.00 scmin=-72.965 scmax=281.464
-ICM_gy  nobit 6 unit=0.00 scmin=-132.335 scmax=304.341
+ICM_gy  nobit 6 key=Yaw_Chassis unit=0.00 scmin=-303.069 scmax=712.381
 ~ ICM_gz  nobit 7 unit=9999.00 scmin=-73.954 scmax=494.882
 ~ ICM_mx  nobit 8 unit=0.00 scmin=-49.95 scmax=399.6
 ~ ICM_my  nobit 1 unit=0.00 scmin=8.685 scmax=227.79
