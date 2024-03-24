@@ -1,58 +1,53 @@
-import os
 import pandas as pd
+import matplotlib.pyplot as plt
+import glob
+import os
 
-# Constants and variable mappings
-ag = 9.81  # Acceleration due to gravity in m/s^2
-Fstatic = 950 * ag  # Static force in N
-mUnsprung = 50  # Unsprung mass in kg
-Cy = 9.81
-Cx = 6
-ay_chassis = 'ICM_ay'
-ax_chassis = 'ICM_ax'
-az_chassis = 'ICM_az'
-ax_wheel = 'ADXL1_x'
-ay_wheel = 'ADXL1_y'
-az_wheel = 'ADXL1_z'
+latColumn = 'ICM_az'  # name of column containing lateral acceleration
+longColumn = 'ICM_ay'  # name of column containing longitudinal acceleration
 
-# Get the current directory path
-current_dir = os.path.dirname(os.path.realpath(__file__))
+# Get the directory of the current script
+current_dir = os.path.dirname(os.path.abspath(__file__))
+csv_files = glob.glob(f"{current_dir}/*.csv")
 
-# Find CSV files in the current directory
-csv_files = [file for file in os.listdir(current_dir) if file.endswith('.csv')]
+# Initialize lists to hold the data from all files
+lateral_g_all = []
+longitudinal_g_all = []
 
-# Read the first CSV file found into a DataFrame
-if csv_files:
-    csv_file = os.path.join(current_dir, csv_files[0])
-    df = pd.read_csv(csv_file)
-else:
-    print("No CSV files found in the directory.")
-    exit()
+# Process each CSV file in the folder
+for file_path in csv_files:
+    print(f"Reading file: {file_path}")  # Print log message
 
-# Define functions for calculating forces
-def calculate_F_lateral(row):
-    return row[ay_chassis] * Fstatic * (1 / Cy)
+    try:
+        # Load the CSV data
+        data = pd.read_csv(file_path)
 
-def calculate_F_longitudinal(row):
-    return row[ax_chassis] * Fstatic * (1 / Cx)
+        # Check if the required columns are present
+        if latColumn not in data.columns or longColumn not in data.columns:
+            raise ValueError("Required columns not found")
 
-def calculate_F_chassis_vertical(row, Flat, Flong):
-    return Flat + Flong + Fstatic
+        # Append the data from this file to the lists
+        lateral_g_all.extend(data[latColumn])
+        longitudinal_g_all.extend(data[longColumn])
 
-def calculate_F_road_lateral(row):
-    return mUnsprung * (row[ax_wheel] - row[ax_chassis])
+    except Exception as e:
+        print(f"Ignoring file due to error: {e}")  # Log the error and continue to the next file
 
-def calculate_F_road_longitudinal(row):
-    return mUnsprung * (row[ay_wheel] - row[ay_chassis])
+# Create the g-g diagram
+plt.figure(figsize=(8, 6))
+plt.scatter(lateral_g_all, longitudinal_g_all, alpha=0.5)  # Plot data points
+plt.title('g-g Diagram')
+plt.xlabel('Lateral Acceleration (g)')
+plt.ylabel('Longitudinal Acceleration (g)')
+plt.grid(True)
+plt.axis('equal')  # Ensures equal scaling on both axes
 
-def calculate_F_road_vertical(row):
-    return mUnsprung * (row[az_wheel] - row[az_chassis])
+# Optional: Define limits for x and y axes
+plt.xlim(-3, 3)
+plt.ylim(-3, 3)
 
-# Create new columns for calculated forces
-df['Flat'] = df.apply(calculate_F_lateral, axis=1)
-df['Flong'] = df.apply(calculate_F_longitudinal, axis=1)
-df['FchassisVert'] = df.apply(lambda row: calculate_F_chassis_vertical(row, row['Flat'], row['Flong']), axis=1)
-df['Froadlat'] = df.apply(calculate_F_road_lateral, axis=1)
-df['Froadlong'] = df.apply(calculate_F_road_longitudinal, axis=1)
-df['Froadvert'] = df.apply(calculate_F_road_vertical, axis=1)
+# Save the plot to a file
+plt.savefig('g_g_Diagram.png')
 
-# Now, you can proceed to plot the calculated forces or perform further analysis
+# Show the plot
+plt.show()
