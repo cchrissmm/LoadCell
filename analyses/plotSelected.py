@@ -54,22 +54,13 @@ for file_path in csv_files:
         local_time = gmt_time.astimezone(pytz.timezone('Etc/GMT-11'))
 
         # Filter the signals and plot them
-        fig, ax = plt.subplots()
+        fig, axes = plt.subplots(len(signals), 1, sharex=True)
         fig.suptitle(os.path.basename(file_path))
-
-        # Create a list to store all axes
-        axes = [ax]
 
         # Create a colormap
         colors = cm.rainbow(np.linspace(0, 1, len(signals)))
 
         for i, signal in enumerate(signals):
-            if i > 0:
-                # Create a new y-axis for each signal after the first
-                axes.append(ax.twinx())
-                # Offset each consecutive axis to prevent overlap
-                axes[-1].spines['right'].set_position(('outward', 60*(i-1)))
-
             # Calculate max and min values
             max_val = data[signal].max()
             min_val = data[signal].min()
@@ -80,11 +71,11 @@ for file_path in csv_files:
             else:
                 axes[i].plot(data[signal], label=f"{signal_names.get(signal, signal)} (Max: {max_val:.2f}, Min: {min_val:.2f})", linewidth=0.5, color=colors[i])
 
+            # Add a legend to each subplot
+            axes[i].legend()
+
         # Print the local time at the bottom of the plot
         plt.figtext(0.01, 0.01, str(local_time), ha="left", fontsize=8)
-
-        # Add a legend
-        fig.legend(loc='upper left')
 
         # Save the plot to a file
         base_name = os.path.basename(file_path)
