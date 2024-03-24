@@ -5,6 +5,8 @@ import os
 from scipy.signal import butter, filtfilt
 from datetime import datetime
 import pytz
+import matplotlib.cm as cm
+import numpy as np
 
 # List of signals to plot
 signals = ['GPS_groundSpeed','ICM_ax', 'ICM_az', 'ICM_gy','GPS_heading','LC_Force']
@@ -52,22 +54,37 @@ for file_path in csv_files:
         local_time = gmt_time.astimezone(pytz.timezone('Etc/GMT-11'))
 
         # Filter the signals and plot them
-        plt.figure()
-        for signal in signals:
+        fig, ax = plt.subplots()
+        fig.suptitle(os.path.basename(file_path))
+
+        # Create a list to store all axes
+        axes = [ax]
+
+        # Create a colormap
+        colors = cm.rainbow(np.linspace(0, 1, len(signals)))
+
+        for i, signal in enumerate(signals):
+            if i > 0:
+                # Create a new y-axis for each signal after the first
+                axes.append(ax.twinx())
+                # Offset each consecutive axis to prevent overlap
+                axes[-1].spines['right'].set_position(('outward', 60*(i-1)))
+
+            # Calculate max and min values
+            max_val = data[signal].max()
+            min_val = data[signal].min()
+
             if signal in filtered_signals:
                 filtered_signal = filtfilt(b, a, data[signal])
-                plt.plot(filtered_signal, label=signal_names.get(signal, signal), linewidth=0.5)
+                axes[i].plot(filtered_signal, label=f"{signal_names.get(signal, signal)} (Max: {max_val:.2f}, Min: {min_val:.2f})", linewidth=0.5, color=colors[i])
             else:
-                plt.plot(data[signal], label=signal_names.get(signal, signal), linewidth=0.5)
+                axes[i].plot(data[signal], label=f"{signal_names.get(signal, signal)} (Max: {max_val:.2f}, Min: {min_val:.2f})", linewidth=0.5, color=colors[i])
 
-        # Add a title
-        plt.title(os.path.basename(file_path))
-        
         # Print the local time at the bottom of the plot
         plt.figtext(0.01, 0.01, str(local_time), ha="left", fontsize=8)
-        
+
         # Add a legend
-        plt.legend()
+        fig.legend(loc='upper left')
 
         # Save the plot to a file
         base_name = os.path.basename(file_path)
@@ -76,6 +93,5 @@ for file_path in csv_files:
 
         # Show the plot
         plt.show()
-
     except Exception as e:
         print(f"Ignoring file due to error: {e}")  # Log the error and continue to the next file
