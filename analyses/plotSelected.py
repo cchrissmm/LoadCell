@@ -12,11 +12,11 @@ import numpy as np
 signals = ['GPS_groundSpeed','ICM_ax', 'ICM_az', 'ICM_gy','GPS_heading','LC_Force']
 
 # List of signals to be low-pass filtered
-filtered_signals = ['ICM_ax', 'ICM_az']
+filtered_signals = ['ICM_ax', 'ICM_az','ICM_gy']
 #filtered_signals = []
 
 # Dictionary of display names for each signal
-signal_names = {'ICM_ax': 'Accelerometer X', 'ICM_az': 'Accelerometer Z'}
+signal_names = {'GPS_groundSpeed': 'Ground Speed (m/s)','ICM_ax': 'Lateral Acc (m/s^2)', 'ICM_az': 'Long Acc (m/s^2)', 'ICM_gy': 'Yaw Rate (Deg/s)','GPS_heading' : 'Heading (deg)','LC_Force' : 'Brake Pedal Force (N)'}
 
 # Get the directory of the current script
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -54,28 +54,32 @@ for file_path in csv_files:
         local_time = gmt_time.astimezone(pytz.timezone('Etc/GMT-11'))
 
         # Filter the signals and plot them
-        fig, axes = plt.subplots(len(signals), 1, sharex=True)
-        fig.suptitle(os.path.basename(file_path))
+        fig, axes = plt.subplots(len(signals), 1, sharex=True, figsize=(6, 8))
+        
+        # Set the plot title
+        fig.suptitle(os.path.basename(file_path), fontsize=14, verticalalignment='top')
 
         # Create a colormap
         colors = cm.rainbow(np.linspace(0, 1, len(signals)))
 
         for i, signal in enumerate(signals):
-            # Calculate max and min values
-            max_val = data[signal].max()
-            min_val = data[signal].min()
-
             if signal in filtered_signals:
                 filtered_signal = filtfilt(b, a, data[signal])
+                # Calculate max and min values
+                max_val = filtered_signal.max()
+                min_val = filtered_signal.min()
                 axes[i].plot(filtered_signal, label=f"{signal_names.get(signal, signal)} (Max: {max_val:.2f}, Min: {min_val:.2f})", linewidth=0.5, color=colors[i])
             else:
+                # Calculate max and min values
+                max_val = data[signal].max()
+                min_val = data[signal].min()
                 axes[i].plot(data[signal], label=f"{signal_names.get(signal, signal)} (Max: {max_val:.2f}, Min: {min_val:.2f})", linewidth=0.5, color=colors[i])
-
+            
             # Add a legend to each subplot
-            axes[i].legend()
+            axes[i].legend(fontsize='small')
 
         # Print the local time at the bottom of the plot
-        plt.figtext(0.01, 0.01, str(local_time), ha="left", fontsize=8)
+        plt.figtext(0.01, 0.01, f"Mmt Taken At: {str(local_time)}\nRelativity Engineering Group DAQ1004", ha="left", fontsize=8)
 
         # Save the plot to a file
         base_name = os.path.basename(file_path)
